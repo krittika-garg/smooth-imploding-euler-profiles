@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smooth Imploding Euler Profiles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a seminar talk — precise, calm, generous with air; the maths leads.
+   IDEA: a lab notebook beside a chalk talk: every claim sits next to a live computation.
+   PICTURE: the (W,Z) phase plane at gamma=7/5, drawn on a deep-teal plate, the smooth profile leaving P_s.
+   COLOUR and TYPE: white paper, deep teal plates, coral for the profile, aqua for barriers; Newsreader + Inter.
+   LAYOUT: one section per "slide", figure-first, controls under each figure, stacked on phones. */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#0d1214);--ink:light-dark(#14181b,#e6ecee);--mut:light-dark(#56626b,#97a5ad);
+--line:light-dark(#dfe4e7,#253036);--soft:light-dark(#f3f6f7,#141b1e);
+--plate:light-dark(#0d4651,#0a343c);--coral:light-dark(#e2492b,#ff7a5c);--aqua:light-dark(#11857a,#7fd6c2);--blue:light-dark(#2b63b8,#9ec4ff)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:600;line-height:1.08;text-wrap:balance;margin:0 0 .5em}
+h1{font-size:clamp(34px,5vw,52px)}h2{font-size:clamp(28px,3.4vw,38px)}h3{font-size:21px;margin-top:1.2em}
+p{margin:0 0 1em;max-width:68ch}a{color:var(--blue)}
+.band{padding:clamp(28px,4vw,64px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+section.band{border-top:1px solid var(--line);scroll-margin-top:56px}
+html{scroll-padding-top:60px;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+nav.scroll{display:flex;gap:4px;overflow-x:auto;padding:8px max(5vw,16px);border-bottom:1px solid var(--line);background:var(--bg);z-index:5;font-size:14px}
+nav.scroll a{flex:none;color:var(--mut);text-decoration:none;padding:8px 10px;border-radius:6px;min-height:36px}
+nav.scroll a.on{color:var(--ink);background:var(--soft);font-weight:600}
+@media(min-width:900px){nav.scroll{position:sticky;top:0}}
+.hero{background:var(--plate);color:#eef6f6}
+.hero p{color:#cfe3e3}.hero a{color:#9fe3d4}
+.hgrid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(20px,3vw,44px);align-items:start}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+@media(max-width:900px){.hgrid,.grid2{grid-template-columns:minmax(0,1fr)}}
+.meta{font-size:15px;color:#b8d3d3;margin-bottom:18px}
+.fig{position:relative;min-height:340px}.fig>svg,.fig>canvas{position:absolute;inset:0;width:100%;height:100%}
+.fig.tall{min-height:min(560px,70vh)}.fig.short{min-height:260px}
+.plate{background:var(--plate);border-radius:10px;overflow:hidden}
+.panel{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--bg)}
+.ctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:14px 0 6px;font-size:15px}
+.ctl label{display:flex;align-items:center;gap:8px}
+input[type=range]{width:min(320px,100%);accent-color:var(--coral);min-height:44px}
+.hero input[type=range]{accent-color:#ff8a6b}
+button{font:inherit;font-size:15px;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--ink);cursor:pointer}
+.proof-btn{font-size:13px;min-height:32px;padding:0 12px;margin:2px 0 12px;color:var(--aqua);border-color:var(--aqua)}
+.proofbody{margin-bottom:14px}
+.hero button{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#eef6f6}
+button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.hero button[aria-pressed=true]{background:#eef6f6;color:#0d4651}
+:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--coral)}
+.read{font-variant-numeric:tabular-nums;font-size:15px;line-height:1.5}
+.read b{font-weight:600}
+.hero .read{color:#eef6f6}
+.out{display:inline-block;padding:2px 10px;border-radius:99px;font-weight:600;font-size:14px}
+.ok{background:#7fd6c2;color:#073b34}.bad{background:#ff8a6b;color:#3d0d02}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--mut);margin-top:8px}
+.hero .legend{color:#b8d3d3}
+.sw{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.note{font-size:14px;color:var(--mut)}
+.hero .note{color:#a9c8c8}
+.box{background:var(--soft);border-radius:10px;padding:16px 18px;margin:16px 0;overflow-x:auto}
+.tag{display:inline-block;font-size:12.5px;font-weight:600;padding:2px 8px;border-radius:99px;margin-right:6px;white-space:nowrap}
+.t-o{background:light-dark(#e6eef0,#1e2b30);color:var(--mut)}.t-a{background:light-dark(#dff3ee,#123630);color:var(--aqua)}.t-n{background:light-dark(#fde5df,#3a1a12);color:var(--coral)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+table{border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+td,th{padding:6px 12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{font-weight:600;color:var(--mut)}
+td:first-child,th:first-child{text-align:left}
+.tk{font:12px Inter,sans-serif;fill:var(--mut)}.al{font:13px Inter,sans-serif;fill:var(--mut)}
+.gr{stroke:var(--line);stroke-width:1}
+footer{font-size:14px;color:var(--mut)}
+pre,.scroll{overflow-x:auto}code{overflow-wrap:anywhere}
+mjx-container[display=true]{overflow-x:auto;overflow-y:hidden;max-width:100%}
+@media(max-width:600px){body{font-size:16px}table{font-size:13px}}
+</style>
+<script>
+window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['$$','$$']],tags:'ams'},svg:{fontCache:'global'},options:{skipHtmlTags:['script','style','textarea','svg','canvas']}};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<header class="hero band" id="top">
+ <div class="wrap">
+  <h1>Taylor Coefficient Estimates for Self-Similar Imploding 3D Compressible Euler Flows</h1>
+  <div class="meta">Krisha Garg · New York University · with mentor Prof. Tristan Buckmaster · γ = 7/5</div>
+  <p>This talk is about smooth, self-similar imploding solutions to the three-dimensional isentropic compressible Euler equations — solutions that collapse to a single point in finite time while keeping the same shape at every scale along the way — for the physical adiabatic exponent \(\gamma=7/5\), following the construction of Buckmaster, Cao-Labora, and Gómez-Serrano. We'll focus on one part of that construction: showing a smooth solution exists all the way from the sonic point out to the far-field state. A central part of the proof is a set of bounds on the Taylor coefficients of the solution near the sonic point, which the original paper gets through binomial estimates plus some additional machinery. We adapt a Catalan-type rescaling of the coefficients from Buckmaster and Chen to reduce that reliance on binomial estimates, by using rigorous interval arithmetic together with an inductive argument. We then carry the rest of the construction through on these new bounds, which simplifies part of what follows. We will distinguish what's adapted from what's original and outline the remaining steps to place our contribution in context. Every figure below is computed live from the equations themselves so push the sliders as you go!</p>
+ </div>
+</header>
+
+<nav class="scroll" id="nav" aria-label="Sections">
+ <a href="#introduction">Introduction</a><a href="#problem">Problem</a><a href="#full">Full profile</a><a href="#directions">Two directions</a><a href="#riemann">Riemann invariants</a><a href="#outline">Outline</a><a href="#focus">What we cover</a><a href="#section2">Taylor coefficient estimates</a><a href="#taylor">Taylor series</a><a href="#catalan">Catalan rescaling</a><a href="#estimates">The estimates</a><a href="#corollaries">Back to Z_n</a><a href="#barriers">Barriers</a><a href="#local">Local construction</a>
+ <a href="#" id="talkHint" style="margin-left:auto" aria-disabled="true" tabindex="-1">← → step through</a>
+</nav>
+
+<main>
+<section class="band" id="introduction"><div class="wrap">
+ <h1 style="margin:0">Introduction</h1>
+</div></section>
+
+<section class="band" id="problem"><div class="wrap">
+ <div>
+  <h2>Setting up the equation</h2>
+  <p>We study the construction of smooth self-similar imploding solutions to the 3D compressible Euler equations:</p>
+  \begin{equation}
+  \begin{cases}
+  \partial_t(\rho u)+\operatorname{div}(\rho u\otimes u)+\nabla p(\rho)=0,\\
+  \partial_t\rho+\operatorname{div}(\rho u)=0,
+  \end{cases}
+  \label{eq:1.1}
+  \end{equation}
+  <p>where \(u\) is the velocity, \(\rho\) the density, and we have ideal gas law \(p(\rho)=\frac{1}{\gamma}\rho^\gamma\) for \(\gamma>1\). The first equation in \eqref{eq:1.1} expresses conservation of momentum, while the second expresses conservation of mass.</p>
+  <p>Before delving further, let us write \eqref{eq:1.1} in its isentropic, radial form:</p>
+  \begin{equation}
+  \begin{cases}
+  \displaystyle\partial_t u+u\,\partial_R u+\frac{1}{\gamma\rho}\,\partial_R\!\left(\rho^\gamma\right)=0,\\[2mm]
+  \displaystyle\partial_t\rho+\frac{1}{R^2}\,\partial_R\!\left(R^2\rho u\right)=0.
+  \end{cases}
+  \label{eq:1.3}
+  \end{equation}
+  <p>We let \(\sigma=\frac1\alpha\rho^\alpha\) denote the rescaled sound speed, where \(\alpha=\frac{\gamma-1}{2}\), and make the following self-similar ansatz:</p>
+  \begin{equation}
+  \begin{cases}
+  \displaystyle u(R,t)=r^{-1}\frac{R}{T-t}\,U\!\left(\log\Big(\frac{R}{(T-t)^{1/r}}\Big)\right),\\[2mm]
+  \displaystyle \sigma(R,t)=\alpha^{-1/2}r^{-1}\frac{R}{T-t}\,S\!\left(\log\Big(\frac{R}{(T-t)^{1/r}}\Big)\right).
+  \end{cases}
+  \label{eq:1.4}
+  \end{equation}
+  <p>where \(r\) is a self-similar scaling parameter to be determined. Then, substituting \eqref{eq:1.4} into \eqref{eq:1.3} gives us equations of the form</p>
+  \begin{equation}
+  \frac{dU}{d\xi}=\frac{N_U(U,S)}{D(U,S)},\qquad \frac{dS}{d\xi}=\frac{N_S(U,S)}{D(U,S)},
+  \label{eq:1.5}
+  \end{equation}
+  <p>where \(\xi=\log\!\left(\dfrac{R}{(T-t)^{1/r}}\right)\).</p>
+ </div>
+</div></section>
+
+<section class="band" id="full"><div class="wrap">
+ <h2>Geometric Picture</h2>
+ <div class="hgrid" style="grid-template-columns:minmax(0,8fr) minmax(0,4fr)">
+  <div>
+   <div class="fig tall plate" style="min-height:min(620px,75vh)"><canvas id="cvFull" role="img" aria-label="Compactified phase portrait with the smooth profile joining P0, Ps and P infinity" style="cursor:crosshair"></canvas></div>
+   <p class="read" id="fullRead" style="margin-top:10px"></p>
+  </div>
+  <div>
+   <p>The compactified phase portrait in Figure 1 shows the system of equations for \(\gamma=\frac75\) and \(r=1.079404\). The coral curve is the smooth profile, and the white and red curves are the sonic loci \(D_Z=0\) and \(D_W=0\) respectively. You can see how the solution depends on \(r\) by moving the slider, and you can click anywhere on the portrait to see the trajectory through that point, traced out in light blue.</p>
+   <p>\(P_0\) is a point in the compactified phase portrait with a finite value of \(U\) but \(S=\infty\). It represents the value of \((\bar{U}/R, \bar{S}/R)\) at the origin for our profiles. \(P_\infty\) represents the values of our profiles at \(R=\infty\). It is equal to \((0,0)\) since both profiles decay. \(P_s\) is a regular sonic point of the system, allowing integral curves to pass through it. Thus, we aim to construct solutions joining \(P_0\) and \(P_\infty\), passing through \(P_s\). For the purposes of this talk, we shall focus on the part constructing solutions from \(P_s\) to \(P_\infty\).</p>
+   <div class="ctl" style="flex-direction:column;align-items:flex-start">
+    <label for="dr">r − r<sub>match</sub> = <b class="read" id="drV">0</b></label>
+    <input type="range" id="dr" min="-1" max="1" step="0.01" value="0" aria-label="Offset of r from the matched value, log scale">
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button id="dr0">Matched r</button><button id="clrTr">Clear traces</button></div>
+    <label><input type="checkbox" id="fField" checked> direction field</label>
+    <label><input type="checkbox" id="fSonic" checked> sonic lines</label>
+   </div>
+   <p class="note">The slider is on a log scale from 10⁻¹² to 10⁻³. The matched value of \(r\) is found in the browser by bisection, to double precision. Moving r even slightly sends the \(\xi<0\) half into a sonic line instead of \(P_0\): matching the two ends is a codimension-one condition, solved by shooting in \(r\).</p>
+   <div class="legend"><span><i class="sw" style="background:#ffb59e"></i>smooth profile</span><span><i class="sw" style="background:#fff"></i>\(D_Z=0\)</span><span><i class="sw" style="background:#ff6b6b"></i>\(D_W=0\)</span><span><i class="sw" style="background:#bfe9ff"></i>your traces</span></div>
+   <p class="note" style="margin-top:12px">Coordinates: \(U=\tfrac12(W+Z)\) and \(H=S/\sqrt\alpha=\tfrac12(W-Z)\), shown as \(X=U/(1+|U|)\) and \(Y=H/(1+H)\). This puts \(S=\infty\) at \(Y=1\) and \(U=\pm\infty\) at the sides. The sonic lines are \(H=\pm(1+U)/\alpha\).</p>
+  </div>
+ </div>
+</div></section>
+
+<section class="band" id="directions"><div class="wrap">
+ <h2>Try the two sonic directions</h2>
+ <p>There are two choices of tangent at \(P_s\): \(v_+\) and \(v_-\). Taking \(v_+\), it turns out to be impossible to join \(P_0\) to \(P_\infty\) by a smooth solution at all — a global solution still exists, but only by introducing a discontinuity like a shock, jumping from one point of the phase portrait to another. Buckmaster, Cao-Labora, and Gómez-Serrano instead take the \(v_-\) direction, and so do we. But even along \(v_-\), smoothness isn't automatic for every \(r\): the trajectory can hit \(D=0\) somewhere other than \(P_s\) and stop there. What they show is that for every \(\gamma>1\) there is some sufficiently large odd \(n\), for some \(r^{(n)}(\gamma)\in(r_n(\gamma),r_{n+1}(\gamma))\) for which the solution is smooth all the way to \(P_\infty\); for \(\gamma=7/5\) specifically, this holds for <em>every</em> sufficiently large odd \(n\), with \(r^{(n)}\in(r_n,r_{n+1})\) (\(r_j\) is defined in "Local construction near the sonic point" below). This talk focuses on the \(\gamma=7/5\) case.</p>
+ <p class="note">On the graph below, you can trace branches for either direction and see what happens; the result shown is for the value of \(r\) at which a smooth solution exists.</p>
+ <div class="hgrid" style="grid-template-columns:minmax(0,8fr) minmax(0,4fr)">
+  <div class="fig tall plate" style="min-height:min(620px,75vh)"><canvas id="cvDir" role="img" aria-label="Trajectories through the sonic point along v minus or v plus"></canvas></div>
+  <div>
+   <div class="tabs" role="group" aria-label="Sonic direction">
+    <button id="dMinus" aria-pressed="true">\(v_-\)</button>
+    <button id="dPlus" aria-pressed="false">\(v_+\)</button>
+   </div>
+   <div class="ctl"><button id="dTrace">Trace branches</button></div>
+   <div class="ctl" style="flex-direction:column;align-items:flex-start"><label for="dProg">trace progress</label><input type="range" id="dProg" min="0" max="1" step="0.005" value="1"></div>
+   <div class="panel" aria-live="polite"><p id="dirRead" class="read" style="margin:0"></p></div>
+   <div class="legend"><span><i class="sw" style="background:#ffb59e"></i>origin-side branch (ξ &lt; 0)</span><span><i class="sw" style="background:#7fe0c5"></i>far-field branch (ξ &gt; 0)</span><span><i class="sw" style="background:#fff"></i>\(D_Z=0\)</span><span><i class="sw" style="background:#ff6b6b"></i>\(D_W=0\)</span></div>
+   <label class="ctl"><input type="checkbox" id="dField" checked> field</label>
+  </div>
+ </div>
+ <p id="dirNote" style="margin-top:14px"></p>
+ <p class="note">Coordinates: \(U=\tfrac12(W+Z)\) and \(S=\sqrt\alpha\,\tfrac12(W-Z)\), shown as \(X=U/(1+|U|)\) and \(Y=S/(1+S)\). In these coordinates the sonic lines are \(S=\pm(1+U)/\sqrt\alpha\). The \(v_-\) branches are the smooth Taylor solution continued numerically in both directions. The \(v_+\) branches start a distance \(10^{-4}\) from \(P_s\) along \(v_+\); because \(v_+\) is the fast direction, that trajectory is unique and the start is stable.</p>
+</div></section>
+
+<section class="band" id="riemann"><div class="wrap">
+ <h2>Riemann invariants</h2>
+ <p>With \(w=u+\sigma\), \(z=u-\sigma\) and \(w=\tfrac1r\tfrac{R}{T-t}W(\xi)\), \(z=\tfrac1r\tfrac{R}{T-t}Z(\xi)\), the system splits so that only one denominator vanishes at the sonic point:</p>
+ <div class="box">
+ \begin{equation}
+ \begin{cases}
+ \displaystyle W'=\frac{N_W}{D_W}=\frac{-\big(r+\tfrac12((1+2\alpha)W+(1-\alpha)Z)\big)W+\tfrac\alpha2 Z^2}{1+\tfrac12\big(W+Z+\alpha(W-Z)\big)},\\[2mm]
+ \displaystyle Z'=\frac{N_Z}{D_Z}=\frac{-\big(r+\tfrac12((1-\alpha)W+(1+2\alpha)Z)\big)Z+\tfrac\alpha2 W^2}{1+\tfrac12\big(W+Z-\alpha(W-Z)\big)}.
+ \end{cases}
+ \label{eq:riemann}
+ \end{equation}
+ </div>
+ <p>For \(\gamma=7/5\): \(D_W=1+\tfrac35W+\tfrac25Z\) and \(D_Z=1+\tfrac25W+\tfrac35Z\). The \(N\)'s are quadratic. Every figure on this page is computed live from these formulas.</p>
+</div></section>
+
+
+<section class="band" id="outline"><div class="wrap">
+ <div>
+  <h2>Outline of the construction</h2>
+  <p>The full construction consists of constructing a solution from \(P_0\) to \(P_s\), continuing a smooth sonic profile from \(P_s\) to \(P_\infty\) and using a shooting argument in \(r\) to match the two. This talk focuses on the showing the existence of the smooth profile from \(P_s\) to \(P_\infty\) and on the Taylor coefficient estimates needed for it.</p>
+  <h3>Local construction near the sonic point</h3>
+  <p>To analyze the profile near the sonic point, we change variables \(\xi\mapsto\psi\) so that \(\partial_\psi=-D_WD_Z\,\partial_\xi\). The system then becomes</p>
+  <div class="box">
+  \begin{equation}
+  \begin{cases}
+  \partial_\psi W=-N_WD_Z,\\
+  \partial_\psi Z=-N_ZD_W,
+  \end{cases}
+  \label{eq:1.14}
+  \end{equation}
+  </div>
+  <p>in which \(P_s\) is a stable stationary point. Its linearization determines two possible tangent directions; as noted in the <a href="#full">geometric picture</a> above, we focus on the \(v_-\) direction. Writing \(\lambda_-\) and \(\lambda_+\) for the corresponding eigenvalues, we define</p>
+  <div class="box">
+  \begin{equation}
+  k=\frac{\lambda_+}{\lambda_-}.
+  \label{eq:1.15}
+  \end{equation}
+  </div>
+  <p>For \(\gamma=7/5\), \(k\) is strictly increasing on \(1&lt;r&lt;r^*\) and \(k\to\infty\) as \(r\to r^*\), where</p>
+  <div class="box">
+  \begin{equation}
+  r^*(\gamma)=1+\frac{2}{\big(1+\sqrt{2/(\gamma-1)}\big)^2},\qquad r^*(7/5)=1+\frac{2}{(1+\sqrt5)^2}\approx 1.190983.
+  \label{eq:1.16}
+  \end{equation}
+  </div>
+  <p>For each integer \(j>1\), define \(r_j\) by \(k(r_j)=j\).</p>
+  <p>We construct a local profile by Taylor-expanding the solution at \(P_s\). The coefficients of the \(n\)-th term of this expansion are given recursively in terms of the lower-order ones; in particular, the equation for \(Z_n\) carries a factor \(n-k(r)\) in its denominator, which is exactly why careful coefficient estimates are needed whenever \(r\) sits close to one of the values \(r_n\).</p>
+  <h3>From \(P_s\) to \(P_\infty\): two barriers</h3>
+  <div class="grid2">
+   <div>
+    <p>A <b>near barrier</b> (the truncated Taylor polynomial) controls the profile close to \(P_s\); a <b>far barrier</b> (a cubic) controls it on the way out to \(P_\infty\). Once the two barriers meet, and the vector field crosses each of them in the right direction, the profile is trapped between them and can only converge to \(P_\infty\). These two barriers only need to stop the profile from crossing them from below; bounding it from above is easier, and simpler curves are enough for that half. Near \(P_s\) the near barrier looks almost identical to the solution itself — it's built from the same truncated Taylor data — but the true profile actually lies just above it, which is exactly why it can be used as a barrier from below; the field there is nearly tangent to the curve, but it still points inward.</p>
+   </div>
+   <div>
+    <div class="fig tall plate"><canvas id="cvOutBar" role="img" aria-label="Near and far barriers with the vector field and the true profile trapped between them"></canvas></div>
+    <div class="legend"><span><i class="sw" style="background:#7fe0c5"></i>near barrier</span><span><i class="sw" style="background:#9ec9ff"></i>far barrier</span><span><i class="sw" style="background:#ffb59e"></i>profile</span><span><i class="sw" style="background:#ffe066"></i>field, crossing a barrier</span></div>
+    <p class="note">The field points inward along both curves the whole way from \(P_s\) to \(P_\infty\), so a trajectory that starts between them — the true profile, in coral — can never cross out. The yellow arrows sit right on the near barrier to show that directly, since the background field is too faint there; even though the field looks almost tangential to the barrier, its normal component still points inward. The inset zooms in on the same stretch near \(P_s\). The Barriers section below works out exactly why, piece by piece.</p>
+   </div>
+  </div>
+  <h3>Our contribution</h3>
+  <p><span class="tag t-n">this work</span>The validity of the barriers depends on estimates on the signs and sizes of the Taylor coefficients at the sonic point \(P_s\). For \(\gamma=7/5\), we study the parameters in the interval \((r_n,r_{n+1})\) for sufficiently large odd integers \(n\). Near the endpoints of the interval, the factor \(n-k(r)\) in the denominator of \(Z_n\) makes these estimates particularly important.</p>
+  <p>Our contribution concerns these estimates. In the original paper, by Buckmaster, Cao-Labora, and Gómez-Serrano, these estimates make use of binomial estimates on the coefficients. In an attempt to reduce this reliance, we adapt a Catalan-type normalization from Buckmaster and Chen to the coupled Euler profile equations. More specifically, we prove a finite base case using rigorous interval arithmetic and use it to get stronger bounds which help close the induction for an estimate on the growth rate of the normalized \(Z_i\) coefficients. The resulting bounds help us show the validity of the barrier. We also adapt some of the subsequent arguments which rely on these bounds. Together, these bounds provide the coefficient control needed in the barrier argument.</p>
+ </div>
+</div></section>
+
+<section class="band" id="focus"><div class="wrap">
+ <div>
+  <h2>What this talk covers</h2>
+  <p>In the writing sample, Section 2 contains our main contribution. The application of those estimates and how they help show the solution between \(P_s\) and \(P_\infty\) is shown in Section 3. The rigorous proof of the local construction at \(P_s\), including the first-order expansion, the recurrence relations, and convergence of the Taylor series, is deferred to Section 4.</p>
+  <p>This talk follows a similar path, piece by piece: the Taylor recurrence, then the Catalan rescaling and the inductive estimates — Section 2's contribution — then the two barriers that carry out Section 3's argument, and finally, in the Local construction section, the rigorous derivation behind Section 4. What is new here, what is adapted, and what follows Buckmaster–Cao-Labora–Gómez-Serrano directly is noted throughout.</p>
+ </div>
+</div></section>
+
+<section class="band" id="section2"><div class="wrap">
+ <h1 style="margin:0">Taylor coefficient estimates</h1>
+</div></section>
+
+<section class="band" id="taylor"><div class="wrap">
+ <h2>A Frobenius-type recurrence with a small divisor</h2>
+ <div class="grid2">
+  <div>
+   <p>Write \(W=\sum W_n\xi^n/n!\) and \(Z=\sum Z_n\xi^n/n!\). Since \(D_W,D_Z\) are affine, their Taylor coefficients are simply a linear functional of each order: \(D_{\circ,n}=\nabla D_\circ\cdot(W_n,Z_n)\) for \(n\ge1\), with \(D_{\circ,0}=D_\circ(P_s)\).</p>
+   <p>\(N_W,N_Z\), on the other hand, are quadratic, so differentiating \(n\) times instead picks up a convolution of the lower orders through the constant Hessian:</p>
+   <div class="box">$$N_{\circ,n}=\left.\nabla N_\circ\right|_{P_s}\cdot(W_n,Z_n)+\sum_{j=1}^{n-1}\binom{n-1}{j-1}(W_{n-j},Z_{n-j})\,(HN_\circ)\,(W_j,Z_j)^\top,\qquad n\ge1,$$</div>
+   <p>with \(N_{\circ,0}=N_\circ(P_s)\). Substituting these into the ODE and matching powers of \(\xi\) gives, for \(m\ge2\),</p>
+   <div class="box">
+   $$D_{W,0}W_m=N_{W,m-1}-\sum_{j=0}^{m-2}\binom{m-1}{j}D_{W,m-1-j}W_{j+1}$$
+   $$D_{Z,1}\,(m-k)\,Z_m=-\sum_{j=1}^{m-2}\binom{m}{j}D_{Z,m-j}Z_{j+1}+\big(N_{Z,m}-\partial_ZN_Z(P_s)Z_m\big)-Z_1W_m\,\partial_WD_Z(P_s)$$
+   </div>
+   <p>The factor \(m-k\) is the whole story. When \(k\) is close to an integer \(n\), \(Z_n\) is of size \(|k-n|^{-1}\). Every later coefficient inherits this, so the series cannot be controlled with fixed constants. The sign of \(Z_n\) also flips as \(k\) crosses \(n\).</p>
+  </div>
+  <div>
+   <div class="fig panel" style="padding:0"><svg id="svgCoef" role="img" aria-label="Magnitude of Taylor coefficients against n"></svg></div>
+   <div class="legend"><span><i class="sw" style="background:var(--coral)"></i>filled dot: coefficient &gt; 0</span><span>hollow dot: &lt; 0</span></div>
+   <p class="note">These are the actual stored coefficients for \(1\le n\le17\,500\): the sign of \(Z_n\) alternates at every step, and \(|Z_n/n!|\) grows steadily across the whole range — the same small-divisor effect above, just far past where it can be computed live.</p>
+  </div>
+ </div>
+</div></section>
+
+<section class="band" id="catalan"><div class="wrap">
+  <h2>Why Catalan numbers</h2>
+  <p>The quadratic terms of the recurrence are convolutions \(\sum_j\binom{n}{j}Z_jZ_{n-j}\). The original argument controls them with binomial estimates. Following Buckmaster and Chen, we divide out the expected growth by Catalan numbers instead:</p>
+  $$z_n=\frac{Z_n}{n!},\qquad \widehat z_n=\frac{z_n}{\mathcal C_n},\qquad \mathcal C_n=\frac{1}{n+1}\binom{2n}{n}.$$
+  <p>The binomial weights then cancel exactly, since \(\binom{n}{j}\,j!\,(n-j)!=n!\):</p>
+  <div class="box">$$\sum_{j}\binom{n}{j}|Z_jZ_{n-j}| = n!\sum_j \mathcal C_j\mathcal C_{n-j}\,|\widehat z_j\widehat z_{n-j}|.$$</div>
+  <p>By the Catalan convolution identity \(\sum_{j=0}^n\mathcal C_j\mathcal C_{n-j}=\mathcal C_{n+1}\), together with \(3\mathcal C_n\le\mathcal C_{n+1}<4\mathcal C_n\) for \(n\ge4\), the weights \(\mathcal C_j\mathcal C_{n-j}\) themselves already sum to essentially \(\mathcal C_{n+1}\) — that's the main piece of combinatorics the induction relies on. What's left is to control how large the normalised terms \(\widehat z_j\widehat z_{n-j}\) can be across the convolution, which is what we prove next.</p>
+</div></section>
+
+<section class="band" id="estimates"><div class="wrap">
+ <h2>Estimates on normalized Taylor coefficients</h2>
+ <div class="grid2">
+  <div>
+   <p>The main lemma. There is \(\kappa_0\) such that for \(k=\kappa>\kappa_0\), \(\kappa\notin\mathbb Z\), and indices \(n<\kappa+2\), the following hold:</p>
+   <div class="box">
+   $$|W_j|\le 4|Z_{j-1}|\ (1\le j),\qquad |\widehat z_j\widehat z_{n-j}|\le 49\,|\widehat z_n|\ (0\le j\le n),\qquad |\widehat z_{n-1}|<|\widehat z_n|\ (n\ge n_0),$$
+   $$\Big|\widehat z_n-\tfrac{C_*}{4}\tfrac{n\kappa}{\kappa-n}\widehat z_{n-1}\Big|\le 0.049\,\Big|\tfrac{C_*}{4}\tfrac{n\kappa}{\kappa-n}\widehat z_{n-1}\Big|\ (n\ge n_0),\qquad C_*=\lim_{r\to r^*}\frac{D_{Z,2}}{2kD_{Z,1}}.$$
+   </div>
+   <p>The proof has three parts.</p>
+   <p><span class="tag t-n">this work</span><b>A finite base case at \(r=r^*\).</b> Working at exactly \(r=r^*\) is what makes this tractable: there \(k(r)\to\infty\), so the ratio law in the box above collapses to a \(\kappa\)-free limiting form, \(\widehat z_m\approx\tfrac{C_*}{4}m\widehat z_{m-1}\), and an infinite family of estimates — one for every \(\kappa>\kappa_0\) and every \(n<\kappa+2\) — reduces to finitely many checks at a single value of \(r\), which continuity then extends to every \(r\) close enough to \(r^*\). Precisely: fix \(\gamma=7/5\) and evaluate every coefficient at \(r=r^*(7/5)\). With \(\ell_0=1\), \(n_0=600\,000\), and \(c_*:=|C_*|\), there exist integers \(j_0,n_1,N\) with \(j_0\ge n_0\), \(N\ge1\), and \(n_1-N\ge\max\{2n_0+2,\,j_0+1\}\), for which:</p>
+   <div class="box">
+   (a) \(|\widehat z_j\widehat z_{n-j}|\le\overline C_1|\widehat z_n|\) holds for every \(0\le n\le n_1\), where \(\overline C_1:=49\) is the same constant as in the main lemma above; the \(W\)/\(Z\) coupling bound holds for every \(1\le j\le n_1\); the monotonicity and the limiting ratio law hold for every \(n_0\le n\le n_1\); and \(\overline C_1>\max\{1,|\widehat z_0|\}\).<br><br>
+   (b) For every \(1\le j\le j_0\) and \(0\le\ell\le\ell_0\),
+   $$\left(\frac{c_*}{4}(1-\widehat\delta)\right)^{j-1}(n_1+1-N-j_0)^{j-1}\ge2^{j-1}\frac{|\widehat z_{j+\ell-1}|}{\max\{|\widehat z_\ell|,1\}}.$$
+   <br>(c) With \(M_1:=\displaystyle\max_{0\le\ell\le\ell_0}\frac{|\widehat z_{n_0}|}{n_0!\max\{|\widehat z_\ell|,1\}}\left(\frac{c_*}{4}\right)^{\ell-n_0}\),
+   $$\left(\frac1{j_0+\ell_0}\right)^{\ell_0}\frac1{M_1}\frac{(9/5)^{j_0}}{3j_0^{1/2}}>1.$$
+   </div>
+   <p>Part (a) alone is the base case the main induction above needs. Parts (b) and (c) are extra: they separately supply the base case for the product-comparison lemma below.</p>
+   <p><b>Proof.</b> Everything here is checked by rigorous interval arithmetic at \(r=r^*\). We fix \(\ell_0=1\) and choose \(n_0\) large enough that the monotonicity and the limiting ratio law start holding; we then choose \(j_0\) large enough that (c) starts holding; with \(j_0,\ell_0\) fixed, (b) then holds for any \(n_1-N\) past a threshold depending only on \(j_0,\ell_0\), so we take \(N\) large enough and \(n_1\) large enough past that. In practice \(n_0=600\,000\) is far larger than the lemma actually needs — it's set that large only to simplify the later induction, not because the estimates themselves require it.</p>
+   <p><span class="tag t-a">adapted</span><b>A product comparison</b>, from Buckmaster and Chen:</p>
+   <div class="box">$$|\widehat z_{j+\ell-1}\widehat z_{m-j}|\le\max\{|\widehat z_\ell|,1\}\,|\widehat z_{m-1}|\,2^{-\min\{j-1,\,m-j-\ell\}}.$$</div>
+   <p>The proof compares the two endpoints of each product: a lower bound on \(|\widehat z_{m-1}/\widehat z_{m-j}|\), obtained by telescoping the ratio law across the \(j-1\) steps between them, against an upper bound on \(|\widehat z_{j+\ell-1}|/\max\{|\widehat z_\ell|,1\}\). It splits into two regimes depending on \(j\). For \(j\le j_0\) the upper bound comes directly from the finite base case above — exactly the inequality checked there for this range of \(j\) and \(\ell\). For \(j>j_0\) we instead iterate the ratio law itself, starting from \(\widehat z_{n_0}\) with the constant \(M_1\); condition (c) above is exactly what makes the result still exceed \(2^{j-1}\). Either way the result decays like \(2^{-j}\), the same shape as the Catalan convolution weights two sections back: it is why only the endpoint terms of every convolution sum in the recurrence actually matter.</p>
+   <p><span class="tag t-n">this work</span><b>A same-index coupling bound.</b> Closing the induction also needs a direct comparison between \(W_i\) and \(Z_i\) at the <i>same</i> index, not the one-step-shifted bound above: assuming the inductive hypothesis up to \(n-1\),</p>
+   <div class="box">$$|W_i|\le2|Z_i|,\qquad i\le n-1.$$</div>
+   <p><b>Proof.</b> For \(i\le n_0\) this is checked directly by interval arithmetic. For \(n_0&lt;i\le n-1\), the \(W\)/\(Z\) coupling bound and the ratio law give</p>
+   <div class="box">$$\left|\frac{W_i}{Z_i}\right|\le4\left|\frac{Z_{i-1}}{Z_i}\right|=4\frac{\mathcal C_{i-1}}{i\,\mathcal C_i}\left|\frac{\widehat z_{i-1}}{\widehat z_i}\right|\le4\frac{\mathcal C_{i-1}}{i\,\mathcal C_i}\left|\frac{4(\kappa-i)}{C_*i\kappa(1-\widehat\delta)}\right|=16\,\frac{i+1}{4i-2}\left|\frac{1}{C_*i^2(1-\widehat\delta)}\right|\le2.$$</div>
+   <p>The second-to-last step uses the Catalan ratio \(\mathcal C_{i-1}/\mathcal C_i=(i+1)/(4i-2)\); the last uses \(i&lt;k+1\) together with the known value of \(C_*\).</p>
+   <p><span class="tag t-o">BCGS</span><b>Closing the induction for the \(W\) recurrence.</b> Assuming every bound holds up to \(n-1\), the recurrence splits \(D_{W,0}W_n\) into four pieces:</p>
+   <div class="box">$$D_{W,0}W_n=\underbrace{(\partial_ZN_W(P_s)-W_1\partial_ZD_W)Z_{n-1}}_{I}+\underbrace{N_{W,n-1}-\partial_ZN_W(P_s)Z_{n-1}}_{II}-\underbrace{W_1\partial_WD_W\,W_{n-1}}_{III}-\underbrace{\sum_{j=1}^{n-2}\binom{n-1}{j}D_{W,n-1-j}W_{j+1}}_{IV}.$$</div>
+   <button class="proof-btn" type="button" aria-expanded="false" data-target="proofW">Show proof</button>
+   <div id="proofW" class="proofbody" hidden><p><b>Proof.</b> We bound the four terms \(I,II,III,IV\) that make up the right-hand side of the recurrence for \(W_n\), one at a time. The leading term \(I\) is immediately \(\le\tfrac25|Z_{n-1}|\) — no further work needed. Each of the remaining three, \(II,III,IV\), reduces to a sum of products \(|Z_jZ_{n-1-j}|\), and the product comparison lemma from the previous section turns each such sum into \(O\big((n-1)|Z_{n-2}|\big)\). To compare this against \(|Z_{n-1}|\) rather than \(|Z_{n-2}|\), we rewrite \(|Z_{n-2}|\) in terms of \(|Z_{n-1}|\) via the ratio law; doing so costs a factor of \(n-1\) in the denominator, leaving each of the three terms at \(O(1/(n-1))\,|Z_{n-1}|\) — concretely, each is below \(\tfrac{1600}{n-1}|Z_{n-1}|\). Summing all four terms together and using \(n-1\ge n_0\) keeps the total under \(|Z_{n-1}|\), with room to spare. Combined with \(D_{W,0}>\tfrac14\) for \(n\) large, this gives \(|W_n|\le4|Z_{n-1}|\), which is exactly what closes the induction for this recurrence.</p></div>
+   <p><span class="tag t-o">BCGS</span><b>Closing the induction for the \(Z\) recurrence.</b> The same recurrence, split the same way, isolates a single leading term in \(Z_{n-1}\) plus three remainder pieces:</p>
+   <div class="box">$$Z_nD_{Z,1}(n-k)=-\frac{n(n-1)}2D_{Z,2}Z_{n-1}\underbrace{-\sum_{j=1}^{n-3}\binom{n}{j}D_{Z,n-j}Z_{j+1}}_{I}+\underbrace{\big(N_{Z,n}-\partial_ZN_Z(P_s)Z_n\big)}_{II}-\underbrace{Z_1W_n\partial_WD_Z(P_s)}_{III}.$$</div>
+   <button class="proof-btn" type="button" aria-expanded="false" data-target="proofZ">Show proof</button>
+   <div id="proofZ" class="proofbody" hidden><p><b>Proof.</b> We again bound the recurrence term by term, this time for \(Z_n\). \(I\) is the same kind of convolution as above, and the \(W\)/\(Z\) coupling bound together with the product comparison lemma again collapse it to \(O(n)|Z_{n-1}|\) — concretely \(|I|\le1.52n|Z_{n-1}|\). \(II\), the quadratic remainder of \(N_Z\), splits into one same-index term and a convolution of lower-order products the same way as \(I\), giving \(|II|\le81n|Z_{n-1}|\). \(III\) needs no such splitting: it is immediately \(\le|Z_{n-1}|\), directly from the \(W\)/\(Z\) coupling bound. Summing the three against the leading term gives \(\big|Z_nD_{Z,1}(n-k)+\tfrac{n(n-1)}2D_{Z,2}Z_{n-1}\big|\le85n\,|Z_{n-1}|\); dividing through by \(\tfrac{n(n-1)}2D_{Z,2}\) then recovers the ratio law with \(\widehat\delta=0.049\), comfortably inside what was assumed. This closes the induction on both coupled recurrences at once.</p></div>
+   <p><span class="tag t-o">BCGS</span><b>Closing the induction for the ratio law.</b> The ratio law itself, rewritten from the bound just closed, reads</p>
+   <div class="box">$$(1-\widehat\delta)\left|\frac{C_*n\kappa}{4(\kappa-n)}\right|\le\left|\frac{\widehat z_n}{\widehat z_{n-1}}\right|\le(1+\widehat\delta)\left|\frac{C_*n\kappa}{4(\kappa-n)}\right|.$$</div>
+   <button class="proof-btn" type="button" aria-expanded="false" data-target="proofRatio">Show proof</button>
+   <div id="proofRatio" class="proofbody" hidden><p><b>Proof.</b> This part of the ratio law reduces to checking a single sign. Its left-hand side already exceeds \(1\) once \(n\ge n_0\), since \(|\kappa/(\kappa-n)|>1\) there — and that is exactly the monotonicity \(|\widehat z_{n-1}|<|\widehat z_n|\) we need, closing the induction for that part at index \(n\).</p></div>
+   <p><span class="tag t-o">BCGS</span><b>Closing the induction for the product estimate.</b> It remains to show \(|\widehat z_j\widehat z_{n-j}|\le\overline C_1|\widehat z_n|\) at index \(n\); by symmetry take \(j\le n/2\).</p>
+   <button class="proof-btn" type="button" aria-expanded="false" data-target="proofProd">Show proof</button>
+   <div id="proofProd" class="proofbody" hidden><p><b>Proof.</b> Writing \(q_i=|\widehat z_i/\widehat z_{i-1}|\), the ratio law bounds \(q_i\) above and below by a multiple of \(i\kappa/|\kappa-i|\). For \(3\le j\le n/2\), the product-comparison lemma already gives \(|\widehat z_j\widehat z_{n-j-1}|\le M\,2^{-(j-1)}|\widehat z_{n-1}|\) with \(M=\max\{|\widehat z_1|,1\}\le\overline C_1\); dividing by \(|\widehat z_n|=q_n|\widehat z_{n-1}|\) and bounding \(q_{n-j}/q_n\) by a fixed constant (valid since \(n-j\ge n/2\ge n_0\) and \(n<\kappa+2\)) absorbs the \(2^{-(j-1)}\) decay and lands comfortably under \(\overline C_1\). For \(j=1,2\), the ratio law applied directly instead gives \(|\widehat z_1\widehat z_{n-1}|/|\widehat z_n|\le|\widehat z_1|/(an)\) and \(|\widehat z_2\widehat z_{n-2}|/|\widehat z_n|\le|\widehat z_2|/(a^2n(n-1))\), where \(a=(1-\widehat\delta)|C_*|/4\); both shrink below \(\overline C_1\) once \(n\) is large, since \(\widehat z_1,\widehat z_2\) stay bounded as \(r\to r^*\). The case \(j=0\) is immediate from \(|\widehat z_0|\le\overline C_1\). Together these close the induction for \(n\ge n_1\); the finite verification above already covers \(n\le n_1\).</p></div>
+  </div>
+  <div>
+   <div class="tabs" role="group" aria-label="Which estimate">
+    <button data-t="bounds" aria-pressed="false">Coefficient bounds</button>
+    <button data-t="wz" aria-pressed="false">W–Z coupling</button>
+    <button data-t="prod" aria-pressed="true">Products</button>
+   </div>
+   <div id="estPanel">
+    <div class="fig panel" style="padding:0"><svg id="svgEst" role="img" aria-label="Numerical check of the inductive estimates"></svg></div>
+    <p class="read" id="estRead"></p>
+    <p class="note" id="estNote"></p>
+   </div>
+   <div id="boundsPanel" hidden>
+    <div class="fig panel" style="padding:0;min-height:300px"><svg id="svgZr" role="img" aria-label="Normalised coefficients with the lower and upper bounds from the lemma"></svg></div>
+    <div class="legend"><span><i class="sw" style="background:var(--blue)"></i>upper \((1+\widehat\delta)\tfrac{C_*}{4}\,n\,\widehat z_{n-1}\)</span><span><i class="sw" style="background:var(--coral)"></i>\(\widehat z_n\)</span><span><i class="sw" style="background:var(--aqua)"></i>lower \((1-\widehat\delta)\tfrac{C_*}{4}\,n\,\widehat z_{n-1}\)</span></div>
+    <p class="note">These are the computed coefficients for \(10\,000\le n\le17\,000\), normalised as \(\widehat z_n=Z_n/(n!\,\mathcal C_n)\). By the ratio estimate for these coefficients (estimate (3.22e) of Buckmaster and Chen), in its limiting form \(\kappa\to\infty\), each one lies between \((1\mp\widehat\delta)\tfrac{C_*}{4}\,n\,\widehat z_{n-1}\), \(\widehat\delta=0.049\). They lie within 0.02 orders of magnitude of each other while \(|\widehat z_n|\) climbs about 7,000 orders, so the chart above overlaps them — the chart below opens that gap, showing each bound as a percentage distance from \(\widehat z_n\).</p>
+    <h3 style="margin-top:14px">Magnified: the gap on each side of \(\widehat z_n\)</h3>
+    <div class="fig panel" style="padding:0;min-height:260px"><svg id="svgZl" role="img" aria-label="Upper and lower bounds as a percentage distance from the coefficient"></svg></div>
+    <p class="note" id="zNote"></p>
+   </div>
+  </div>
+ </div>
+</div></section>
+
+<section class="band" id="corollaries"><div class="wrap">
+ <div>
+  <h2>Back to \(Z_n\) itself</h2>
+  <p>The lemma is stated for the normalised \(\widehat z_n\). Undoing the Catalan rescaling, using \(Z_m=m!\,\mathcal C_m\widehat z_m\) and \(\mathcal C_m/\mathcal C_{m-1}\to4\), recovers a ratio law for the original coefficients directly, with a slightly larger constant \(\delta=0.05\) absorbing the \(\mathcal C_m/\mathcal C_{m-1}\to4\) error:</p>
+  <div class="box">$$\Big|Z_n-C_*\frac{n^2k}{k-n}Z_{n-1}\Big|\le\delta\Big|C_*\frac{n^2k}{k-n}Z_{n-1}\Big|,\qquad \delta=0.05.$$</div>
+  <p><span class="tag t-a">recovered</span>This is exactly the consecutive-coefficient estimate used by Buckmaster, Cao-Labora and Gómez-Serrano — here obtained through the Catalan normalisation instead of their binomial estimates. Iterating it from \(n_0\) up to \(n\) turns it into an explicit two-sided bound on \(|Z_n|/n!\) itself, for \(n\) odd and sufficiently large, \(r\in(r_n,r_{n+1})\):</p>
+  <div class="box">$$\frac{k^n}{k-n}\,|C_*|^n\ \lesssim\ \frac{Z_n}{n!}\ \lesssim\ \frac{n\,k^n}{k-n}\,|C_*|^n\left(\frac{1.05}{0.95}\right)^n.$$</div>
+  <p>In particular \(\big(|Z_n|/n!\cdot(k-n)\big)^{1/n}\approx n\), matching the growth rate the small divisor predicts.</p>
+  <p>Since \(C_*<0\), iterating also fixes the <em>sign</em> of \(Z_n\): it alternates with \(n\), positive exactly at odd \(n\) once \(n\) is past the point where the interval-arithmetic base case takes over. That is the same alternation checked numerically for small \(n\) earlier.</p>
+  <h3>The one comparison the barrier needs</h3>
+  <p>The near-field barrier is built from the degree-\(n\) Taylor polynomial, so its validity depends on where the <em>true</em> profile sits relative to it at the first omitted order. Comparing the omitted coefficient \(Z_{n+1}\) against the tangent direction \((W_1,Z_1)\) at \(P_s\) gives</p>
+  <div class="box">$$Z_{n+1}-\frac{Z_1}{W_1}W_{n+1}<0 \quad\Longleftrightarrow\quad W_1Z_{n+1}-Z_1W_{n+1}<0,\qquad r\in(r_n,r_{n+1}).$$</div>
+  <p><span class="tag t-o">BCGS</span>This is the inequality the next section calls on to say the profile starts on the correct side of the near barrier. Everything above — the ratio law, its sign, and this last comparison — is the coefficient control the barrier argument assumes; the next section is where it gets used.</p>
+ </div>
+</div></section>
+
+<section class="band" id="barriers"><div class="wrap">
+ <h2>Trapping the profile between two barriers</h2>
+ <p><span class="tag t-o">BCGS</span>The geometric strategy is Buckmaster–Cao-Labora–Gómez-Serrano's. A near barrier, obtained by truncating the Taylor expansion at \(P_s\), controls the trajectory as it leaves \(P_s\); a far barrier carries it the rest of the way to \(P_\infty\); the two meet in between. Three things need proving: the profile starts on the required side of each barrier, the vector field crosses each barrier in the direction that keeps the profile trapped, and the two barriers actually intersect while both of these hold. Our coefficient estimates feed the first point and the near-barrier half of the second — everything about the far barrier below is checked once in closed form at \(r=r^*\), then carried to every \(r\) nearby by continuity.</p>
+ <p>The <b>far barrier</b> is a cubic that matches the profile to second order at \(P_s\) and ends at \(P_\infty\):</p>
+ $$b^{\rm fl}(t)=P_s+v_1t+\tfrac{v_2}{2}t^2-\big(P_s+v_1+\tfrac{v_2}{2}\big)t^3,\quad t\in[0,1].$$
+ <p>The <b>near barrier</b> is the Taylor polynomial of degree \(n=\lfloor k\rfloor\). For a curve \(b\), the sign of</p>
+ $$P_b=b_Z'\,N_W(b)D_Z(b)-b_W'\,N_Z(b)D_W(b)$$
+ <p>tells us which way the field crosses it. The profile starts above the near barrier, and \(P^{\rm nl}_n>0\) keeps it there. The coefficient bounds give \(P^{\rm nl}_n(s)\) two leading terms, of degrees \(n+1\) and \(2n-1\), and \(P^{\rm nl}_n(s)>0\) on \((0,s_{\rm val})\) with</p>
+ $$s_{\rm val}=\Big(\tfrac{99}{100}\tfrac{|D_{Z,2}|}{2\,\partial_ZD_Z}\tfrac{n!}{Z_n}\Big)^{1/(n-2)} .$$
+ <p>The barriers meet before \(s_{\rm val}\). After the meeting point the far barrier takes over, and the profile can only converge to \(P_\infty\).</p>
+
+ <h3 style="margin-top:28px">Try it: break a barrier</h3>
+ <p>Before the rigorous argument, here's the intuition behind it. A barrier is just some curve from \(P_s\) out, built as a polynomial in a parameter \(t\). What makes it <em>work</em> is that the vector field crosses it in one consistent direction the whole way, and that the profile stays on the correct side of it the whole way. Write down any degree-10 polynomial for \(Z(t)\) below and see whether it holds up — or switch to the real near-and-far barrier, concatenated into one curve, and see that it does.</p>
+ <div class="hgrid" style="grid-template-columns:minmax(0,8fr) minmax(0,4fr)">
+  <div>
+   <div class="fig tall plate"><canvas id="cvBreak2" role="img" aria-label="Near and far barrier with one coefficient scaled by a user-chosen factor"></canvas></div>
+   <div class="legend"><span><i class="sw" style="background:#7fe0c5"></i>field crosses correctly (near barrier / your curve)</span><span><i class="sw" style="background:#9ec9ff"></i>field crosses correctly (far barrier)</span><span><i class="sw" style="background:#ff6b6b"></i>field crosses the wrong way</span><span><i class="sw" style="background:#ffb59e"></i>profile</span><span><i class="sw" style="background:rgba(255,255,255,0.5)"></i>sonic loci \(D_W{=}0\), \(D_Z{=}0\) (background only)</span></div>
+  </div>
+  <div>
+   <div class="tabs" role="group" aria-label="Which curve to test">
+    <button id="brCustom2" aria-pressed="false">Your own curve</button>
+    <button id="brReal2" aria-pressed="true">Real barrier (near + far)</button>
+   </div>
+   <div id="brCoefs2">
+    <p class="note" style="margin-bottom:6px">\(Z(t)=Z_0+\sum_{k=1}^{10}c_k\,t^k\), \(W(t)=W_0+W_1t\) fixed at the true tangent. Set any coefficients \(c_1,\dots,c_{10}\):</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px 10px;margin-bottom:8px">
+     <label>\(c_1\) <input type="number" id="brC12" step="any" style="width:100%"></label>
+     <label>\(c_2\) <input type="number" id="brC22" step="any" style="width:100%"></label>
+     <label>\(c_3\) <input type="number" id="brC32" step="any" style="width:100%"></label>
+     <label>\(c_4\) <input type="number" id="brC42" step="any" style="width:100%"></label>
+     <label>\(c_5\) <input type="number" id="brC52" step="any" style="width:100%"></label>
+     <label>\(c_6\) <input type="number" id="brC62" step="any" style="width:100%"></label>
+     <label>\(c_7\) <input type="number" id="brC72" step="any" style="width:100%"></label>
+     <label>\(c_8\) <input type="number" id="brC82" step="any" style="width:100%"></label>
+     <label>\(c_9\) <input type="number" id="brC92" step="any" style="width:100%"></label>
+     <label>\(c_{10}\) <input type="number" id="brC102" step="any" style="width:100%"></label>
+    </div>
+    <button id="brResetCoefs2">Reset to tangent line</button>
+   </div>
+   <div class="panel" id="brRead2" aria-live="polite" style="margin-top:10px"></div>
+  </div>
+ </div>
+
+ <h3 style="margin-top:28px">Why the far barrier holds, once and for all</h3>
+ <p><span class="tag t-o">BCGS</span>\(P^{\rm fl}\) matches the profile closely enough at both ends that it vanishes to third order at \(P_s\) (\(t=0\)) and to first order at \(P_\infty\), where it and its derivative both vanish (\(t=1\)). Both factors come out for free, leaving \(P^{\rm fl}(t)=t^3(1-t)^2\,Q^{\rm fl}(t)\) for some degree-six \(Q^{\rm fl}\). Every coefficient of \(Q^{\rm fl}\) comes out positive in one finite computation at \(r=r^*\), so \(P^{\rm fl}(t)>0\) on \((0,1)\) there — and, by continuity, for every \(r\) close enough to \(r^*\), i.e. for \(n\) large.</p>
+ <p>The denominator \(D_W\) along the far barrier stays positive the same way: a cubic in \(t\) whose coefficients are all positive at \(r=r^*\). \(D_Z\) is subtler, since \(D_Z(P_s)=0\) makes it a multiple of \(t\), with</p>
+ $$\frac{D_Z(b^{\rm fl}(t))}{t}=D_{Z,1}+\tfrac12D_{Z,2}\,t+\tfrac16D^{\rm fl}_{Z,3}\,t^2.$$
+ <p>At \(r=r^*\) this quadratic has two real roots \(t^{\rm in}\) &lt; \(t^{\rm out}\) in \((0,1)\), so \(D_Z>0\) away from the sub-interval \([t^{\rm in},t^{\rm out}]\) — and the two points where it vanishes sit to the left of \(P_s\), clear of where the near barrier actually connects.</p>
+
+ <h3 style="margin-top:28px">The profile starts on the correct side of the near barrier</h3>
+ <p><span class="tag t-o">BCGS</span>Before tracking the field along the near barrier, we need to know the solution starts on the right side of it in the first place:</p>
+ <div class="box">The smooth solution \((W,Z)\) agrees with the near barrier \(b_n^{\rm nl}\) to order \(n\) at \(P_s\), and lies above it just after: for the same value of \(W\), its \(Z\)-coordinate is the larger one.</div>
+ <p><b>Proof.</b> Since the smooth solution and the near barrier agree up to order \(n\), the first term where they differ is \(\tfrac{t^{n+1}}{(n+1)!}(W_{n+1},Z_{n+1})+O(t^{n+2})\). Its component normal to the common tangent \((W_1,Z_1)\) at \(P_s\) has sign \(-(W_1,Z_1)\wedge\tfrac{t^{n+1}}{(n+1)!}(W_{n+1},Z_{n+1})\) — positive meaning the solution sits above the tangent line there, negative meaning below — so it suffices to show</p>
+ <div class="box">$$W_1Z_{n+1}-Z_1W_{n+1}<0.$$</div>
+ <p>This is exactly the comparison proved two sections back, using the coefficient estimates from the main lemma: \(W_1<0\), \(Z_1>0\), and the sign of \(Z_{n+1}\) (odd \(n+1\) once past the base case) fix it.</p>
+
+ <h3 style="margin-top:28px">Why the near barrier holds on \((0,s_{\rm val})\)</h3>
+ <p><span class="tag t-a">adapted</span>Unlike the far barrier, the near barrier is a degree-\(n\) polynomial with \(n\) in the thousands by the time \(k\) is large, so there's no single finite computation to run. \(P^{\rm nl}_n\) has degree up to \(4n-1\), and every one of its Taylor coefficients at \(s=0\) is itself a sum over quadruples of indices adding to the same total — a convolution of convolutions. The discrepancy function \(\ell(i)=\min\{i,n-i\}\) organizes this: coefficients with large discrepancy (none of the four indices near \(0\) or \(n\)) decay like \(n^{-10}\) or faster, so only the handful of terms with an index pinned near an endpoint can possibly matter. Precisely, writing \(\genfrac{[}{]}{0pt}{}{n}{a}=\binom na\big(\tfrac{0.95}{1.05}\big)^{a(n-a)/n}\) for a Catalan-type weight on each index, every coefficient of \(P_n^{\rm nl}\) satisfies</p>
+ <div class="box">$$\frac{\partial_s^{i-1}P_n^{\rm nl}(0)}{(i-1)!}\ \lesssim\ i\left(\frac{|Z_n|}{n!}\right)^{i/n}\frac{(k-n)^{i/n-\lfloor i/n\rfloor}}{n^{\min\{7,\,\ell(i)\}}},\qquad i\le4n.$$</div>
+ <p>Running that bookkeeping through isolates exactly two leading contributions, of degree \(n+1\) and \(2n-1\) in \(s\) — matching the two terms already visible in the \(P^{\rm nl}_n(s)\) formula above — with every other coefficient at least a factor of \(n\) smaller once \(s\) is in the stated range. Identifying the coefficients of those two terms gives the expansion</p>
+ <div class="box">$$P_n^{\rm nl}(s)=n\,\frac{Z_n}{n!}\,\frac{N_{W,0}D_{Z,2}}2\,s^{n+1}\Big(1+O(\tfrac1n)\Big)+n\left(\frac{Z_n}{n!}\right)^2\!\partial_ZD_Z\,N_{W,0}\,s^{2n-1}\Big(1+O(\tfrac1n)\Big).$$</div>
+ <p>Writing \(P^{\rm nl}_n(s)\) with those two terms factored out front leaves a bracket</p>
+ $$\frac{D_{Z,2}}2\Big(1+O(\tfrac1n)\Big)+\frac{Z_n}{n!}\,\partial_ZD_Z\,s^{n-2}\Big(1+O(\tfrac1n)\Big),$$
+ <p>and \(0\) &lt; \(s\) &lt; \(s_{\rm val}\) is exactly the range where the second term stays smaller in size than \(\tfrac{99}{100}\) of the first — so the bracket keeps the sign of \(D_{Z,2}<0\), and with \(N_{W,0}<0\) and \(Z_n>0\) (both from the corollaries above), the product \(P^{\rm nl}_n(s)\) comes out positive, exactly on \((0,s_{\rm val})\).</p>
+
+ <h3 style="margin-top:28px">Why the two barriers meet</h3>
+ <p><span class="tag t-o">BCGS</span>Write the far barrier implicitly, as the zero set of a polynomial \(B^{\rm fl}(W,Z)\) (a resultant, eliminating \(t\) from \(b^{\rm fl}(t)=(W,Z)\)) that is positive above the far barrier and negative below it. Composing with the near barrier gives a single scalar function \(f(s)=B^{\rm fl}(b_n^{\rm nl}(s))\), and an intersection of the two curves is exactly a zero of \(f\).</p>
+ <p>Because the barriers already agree to second order at \(P_s\), \(f(0)=f'(0)=f''(0)=0\), so \(f\) starts with a cubic term \(a_3s^3\). A direct computation at \(r=r^*\) gives \(a_3<0\). Further out, the \(s^n\) term — with coefficient \(a_n=\tfrac{Z_n}{n!}\partial_ZB^{\rm fl}(P_s)\) — takes over, and \(a_n>0\) since \(Z_n>0\). Exactly the same discrepancy bookkeeping as above shows every other term of \(f\) is smaller than \(\max\{|a_3|s^3,|a_n|s^n\}\) by a factor of \(n\), throughout the range where \(s_{\rm val}\) is meaningful.</p>
+ <p>So \(f\) is governed by \(a_3s^3+a_ns^n\): negative for small \(s\) (the cubic term dominates, with the wrong sign), eventually positive as \(s\) grows and the \(s^n\) term catches up. By the intermediate value theorem \(f\) has a zero in between — an intersection point \(s_{\rm int}\) with \(s_{\rm int}\) &lt; \(s_{\rm val}\), exactly as the opening summary claimed.</p>
+
+ <h3 style="margin-top:28px">Finishing the proof: continuation to \(P_\infty\)</h3>
+ <div class="grid2">
+  <div>
+   <p><span class="tag t-o">BCGS</span>Build a region \(\mathcal T\): start at \(P_s\), follow the near barrier to the intersection point <b style="color:#7fe0c5">①</b>, then the far barrier <b style="color:#9ec9ff">②</b> — which crosses \(D_Z=0\) twice — until the first crossing, then the segment of \(D_Z=0\) itself to the second crossing, then the far barrier again out to \(P_\infty\); close it off with the diagonal \(W=Z\) and the line \(W=W_0\) (the pale closing edges in the figure).</p>
+   <p>\(D_W>0\) throughout \(\mathcal T\): it's affine, positive on every piece of the boundary (the two barriers, and on \(D_Z=0\) it equals \(D_W-D_Z=\alpha(W-Z)>0\)), so it can't vanish inside. A similar argument gives \(D_Z>0\) inside \(\mathcal T\) away from \(P_s\) and the segment \([P^{\rm in},P^{\rm out}]\) on its boundary. The initial solution starts inside \(\mathcal T\) — point <b style="color:#7fe0c5">①</b>, the side-of-the-barrier corollary again — and the field points inward along every boundary piece <b style="color:#9ec9ff">②</b>: across the barriers by the sign results above, along \(D_Z=0\) by direct computation, and the diagonal and \(W=W_0\) are each invariant or repelling. So the trajectory can never leave.</p>
+   <p>A trajectory trapped in a bounded region must converge to a boundary-free equilibrium, and \(D_W\ne0\) rules out everything but the equilibria of the underlying ODE. Besides \(P_\infty=(0,0)\) there are three others; one is ruled out by a short computation, the other two lie outside \(\mathcal T\) immediately. Convergence back to \(P_s\) itself is impossible too, since \(W_1<0\) means \(W\) is strictly decreasing near \(P_s\), incompatible with returning to it as \(\xi\to\infty\). The only point left is \(P_\infty\) — which is exactly Proposition 3.1.</p>
+  </div>
+  <div>
+   <div class="fig tall plate"><canvas id="cvTrap" role="img" aria-label="The trapping region: near barrier, far barrier, the sonic-line segment between them, and the closing edges, with the vector field and the true profile"></canvas></div>
+   <div class="legend"><span><i class="sw" style="background:#7fe0c5"></i>near barrier</span><span><i class="sw" style="background:#9ec9ff"></i>far barrier</span><span><i class="sw" style="background:#fff"></i>\(D_Z=0\) segment</span><span><i class="sw" style="background:rgba(255,255,255,0.45)"></i>closing edges</span><span><i class="sw" style="background:#ffb59e"></i>profile</span><span><i class="sw" style="background:#ffe066"></i>field, crossing a barrier</span></div>
+   <p class="note">The three circled points mark the strategy from the top of this section: ① the profile starts on the correct side, ② the field points inward all along the boundary, ③ the two barriers actually meet. The yellow arrows sit right on the near barrier and show the field direction there directly, since the background field is too faint to read at that scale; the inset in the top-left corner zooms in on that same stretch near \(P_s\).</p>
+  </div>
+ </div>
+
+
+</div></section>
+
+<section class="band" id="local"><div class="wrap">
+ <h2>Local construction at the sonic point</h2>
+ <p><span class="tag t-o">BCGS</span>Everything above — the recurrence, the resonance parameter \(k\), the whole barrier argument — rests on a local solution actually existing near \(P_s\) in the first place. That existence is background to this talk rather than part of its contribution, so it's collected here at the end.</p>
+
+ <h3>Pinning down the tangent direction</h3>
+ <p>Sonic points of the system solve \(D_Z=N_Z=0\); for \(\gamma=7/5\) there are exactly two, \(P_s=(W_0,Z_0)\) and a second point \(\bar P_s\), and any solution joining \(P_0\) to \(P_\infty\) has to pass through one of them — it's \(P_s\) that the construction uses. Since \(D_W(P_s)\ne0\), the \(W\)-equation hands over \(W_1\) immediately:</p>
+ $$W_1=\frac{N_W(P_s)}{D_W(P_s)}.$$
+ <p>For \(Z_1\) both the numerator and denominator of the \(Z\)-equation vanish at \(P_s\), so L'Hôpital's rule applies instead: the derivative has to satisfy the quadratic \(\big(\nabla D_Z(P_s)\cdot(W_1,Z_1)\big)Z_1=\nabla N_Z(P_s)\cdot(W_1,Z_1)\), which has <em>two</em> roots. Each gives a candidate tangent direction at \(P_s\) — \(v_-=(W_1,Z_1)\) and \(v_+=(W_1,\hat Z_1)\) — and these turn out to be exactly the eigenvectors of the Jacobian of the desingularised system (the \(\psi\)-reparametrisation from the Outline) at \(P_s\):</p>
+ $$J=\begin{pmatrix}N_W(P_s)\,\partial_WD_Z(P_s) & N_W(P_s)\,\partial_ZD_Z(P_s)\\ D_W(P_s)\,\partial_WN_Z(P_s) & D_W(P_s)\,\partial_ZN_Z(P_s)\end{pmatrix},$$
+ <p>with eigenvalues \(\lambda_-=\tfrac{N_W(P_s)}{W_1}\big(\partial_WD_Z(P_s)W_1+\partial_ZD_Z(P_s)Z_1\big)\) and \(\lambda_+\) defined the same way with \(\hat Z_1\) in place of \(Z_1\). The resonance parameter is exactly their ratio, \(k=\lambda_+/\lambda_-\); unwinding it with the trace of \(J\) gives the closed form used above,</p>
+ $$k(r)=-\frac{Z_1\,\partial_ZD_Z(P_s)-\partial_ZN_Z(P_s)}{D_{Z,1}},\qquad D_{Z,1}=\nabla D_Z(P_s)\cdot(W_1,Z_1).$$
+ <p>That \(k\) is smooth and strictly increasing on \([1,r^*)\), with \(k(1)=1\) and \(k\to\infty\) as \(r\to r^*\), comes down to an explicit computation: the numerator of \(k\) stays positive throughout the interval, while the denominator \(D_{Z,1}\) is positive on \([1,r^*)\) and vanishes exactly at \(r^*\) (the strict-monotonicity step is checked by computer). So \(k\) is a bijection from \([1,r^*)\) onto \([1,+\infty)\) — which is exactly why every integer has a unique preimage \(r_j\), and why \(r\to r^*\) is the same limit as \(k\to\infty\).</p>
+
+ <h3>Where the small-divisor recurrence comes from</h3>
+ <p>Multiply the \(W\)-equation by \(D_W\) and differentiate \(m-1\) times, then evaluate at \(\xi=0\) — the system is autonomous, so \(P_s\) can be placed there without loss of generality — and the Leibniz rule hands back the \(W_m\) recurrence directly. The \(Z\)-equation takes one more step, because \(D_Z\) itself vanishes at \(P_s\): differentiating it \(m\) times and evaluating at \(0\) leaves a term proportional to \(Z_m\) with no denominator at all. Subtracting off the part of that term that doesn't actually depend on \(D_Z\) — using the very quantity that defines \(k\) above — turns the leftover coefficient on the left-hand side into exactly \((m-k)D_{Z,1}\). That one algebraic step is where the small divisor in the recurrence comes from.</p>
+
+ <h3>Why the series converges at all</h3>
+ <p>None of this is useful unless the resulting formal power series actually converges to a genuine solution near \(P_s\). The recurrence bounds each \(W_m\), \(Z_m\) by a convolution of earlier coefficients, so a short induction — using that the Catalan numbers satisfy \(\mathcal C_{i+1}\le4\mathcal C_i\) — shows</p>
+ $$|W_i|+|Z_i|\le C^{i+1}i!$$
+ <p>for some constant \(C\) depending on which interval \((r_n,r_{n+1})\) \(r\) sits in. That is exactly the growth rate of a function analytic on a disc of radius \(1/C\), so the Taylor series converges there and genuinely solves the ODE; the same estimate shows the coefficients — and hence the solution itself — vary continuously in \(r\) on any closed sub-interval of \((r_n,r_{n+1})\). That continuity is what lets every argument above get carried from the single value \(r=r^*\), checked once by rigorous interval arithmetic, out to every \(r\) nearby.</p>
+ <p class="note">The same bound says precisely why control gets harder near the ends of \((r_n,r_{n+1})\): coefficients with index past \(n\) blow up in powers of \(|k-n|^{-1}\), the power growing with how far past \(n\) the index sits, while every coefficient at or before index \(n\) stays bounded as \(r\to r_n\). That is the small-divisor effect from the very first figure on this page, now pinned down exactly.</p>
+</div></section>
+
+</main>
+
+<footer class="band" style="border-top:1px solid var(--line)"><div class="wrap">
+ <p>Based on the construction of Buckmaster, Cao-Labora and Gómez-Serrano, and the Catalan normalisation of Buckmaster and Chen. Full statements and references are in the accompanying writing sample.</p>
+ <p>The figures are computed in your browser in double precision, straight from the recurrences above. They illustrate the argument and are not part of any proof. The rigorous base case uses interval arithmetic at \(r=r^*\).</p>
+</div></footer>
+
+<script>
+{
+/* ===== core model, gamma = 7/5 ===== */
+const al=0.2,aW=0.6,bW=0.4,aZ=0.4,bZ=0.6,c1=0.7,c2=0.4,c3=0.1;
+const RS=1+2/(1+Math.sqrt(5))**2;
+const NW=(W,Z,r)=>-r*W-c1*W*W-c2*W*Z+c3*Z*Z;
+const NZ=(W,Z,r)=>-r*Z-c2*W*Z-c1*Z*Z+c3*W*W;
+const DW=(W,Z)=>1+aW*W+bW*Z, DZ=(W,Z)=>1+aZ*W+bZ*Z;
+function sonic(r){const f=Z=>NZ(-(1+bZ*Z)/aZ,Z,r);const c0=f(0),cp=f(1),cm=f(-1);const A=(cp+cm)/2-c0,B=(cp-cm)/2,C=c0;const d=Math.sqrt(Math.max(0,B*B-4*A*C));
+ return [1,-1].map(s=>{const Z=(-B+s*d)/(2*A);return[-(1+bZ*Z)/aZ,Z]})}
+function setup(r){const P=sonic(r),[W0,Z0]=P[1];const nzW=2*c3*W0-c2*Z0,nzZ=-r-c2*W0-2*c1*Z0;const W1=NW(W0,Z0,r)/DW(W0,Z0);
+ const A=bZ,B=aZ*W1-nzZ,C=-nzW*W1,d=Math.sqrt(Math.max(0,B*B-4*A*C));const Z1=(-B-d)/(2*A),Zp=(-B+d)/(2*A);
+ const dz1=aZ*W1+bZ*Z1;return{P,W0,Z0,W1,Z1,Zp,k:-(bZ*Z1-nzZ)/dz1,nzW,nzZ,dz1}}
+function rOfK(K){let lo=1+1e-9,hi=RS-1e-15;for(let i=0;i<90;i++){const m=(lo+hi)/2;if(setup(m).k<K)lo=m;else hi=m}return(lo+hi)/2}
+function coeffs(r,N){const S=setup(r);const w=[S.W0,S.W1],z=[S.Z0,S.Z1];const dW0=DW(S.W0,S.Z0);
+ const conv=(a,b,m,lo)=>{let s=0;for(let i=lo;i<=m-lo;i++)s+=a[i]*b[m-i];return s};
+ for(let m=2;m<=N;m++){const q=m-1;const nW=-r*w[q]-c1*conv(w,w,q,0)-c2*conv(w,z,q,0)+c3*conv(z,z,q,0);
+  let s=0;for(let j=1;j<m;j++)s+=(aW*w[j]+bW*z[j])*(m-j)*w[m-j];w.push((nW-s)/(dW0*m));
+  const Q=-c2*conv(w,z,m,1)-c1*conv(z,z,m,1)+c3*conv(w,w,m,1);let t=0;for(let j=2;j<m;j++)t+=(aZ*w[j]+bZ*z[j])*(m-j+1)*z[m-j+1];
+  const rhs=S.nzW*w[m]+Q-aZ*w[m]*z[1]-t;z.push(rhs/(S.dz1*m+bZ*z[1]-S.nzZ));
+  if(!isFinite(z[m])||!isFinite(w[m])){z.pop();w.pop();break}}
+ const DZ2=2*(aZ*w[2]+bZ*z[2]);return{...S,r,w,z,DZ2,Cs:DZ2/(2*S.k*S.dz1)}}
+const cache=new Map();
+function model(K){const key=K.toFixed(4)+'';if(cache.has(key))return cache.get(key);const r=rOfK(K);const N=Math.min(190,Math.floor(Math.max(3*K,K+6))+20);const M=coeffs(r,N);cache.set(key,M);if(cache.size>60)cache.delete(cache.keys().next().value);return M}
+const CLIM=(()=>{const M=coeffs(rOfK(2e6),3);return M.Cs})();
+const cat=[1];for(let n=1;n<=200;n++)cat.push(cat[n-1]*(4*n-2)/(n+1));
+const fact=n=>{let f=1;for(let i=2;i<=n;i++)f*=i;return f};
+const poly=(c,n,s)=>{let v=0;for(let i=n;i>=0;i--)v=v*s+c[i];return v};
+const dpoly=(c,n,s)=>{let v=0;for(let i=n;i>=1;i--)v=v*s+i*c[i];return v};
+
+/* profile: Taylor start, then RK4 in s=-psi */
+/* adaptive Dormand-Prince 5(4) for the regularised flow; stop(W,Z) returns a reason or '' */
+function dp45(F,W,Z,stop,maxIt,tol){tol=tol||1e-13;const pts=[[W,Z]];let h=1e-3,res='window',it=0,lastP=[W,Z];
+ const c=[0,1/5,3/10,4/5,8/9,1,1],A=[[],[1/5],[3/40,9/40],[44/45,-56/15,32/9],[19372/6561,-25360/2187,64448/6561,-212/729],[9017/3168,-355/33,46732/5247,49/176,-5103/18656],[35/384,0,500/1113,125/192,-2187/6784,11/84]];
+ const b5=[35/384,0,500/1113,125/192,-2187/6784,11/84,0],b4=[5179/57600,0,7571/16695,393/640,-92097/339200,187/2100,1/40];
+ for(;it<(maxIt||200000);it++){const st=stop(W,Z,it);if(st){res=st;break}
+  const k=[];for(let i=0;i<7;i++){let w=W,z=Z;for(let j=0;j<i;j++){w+=h*A[i][j]*k[j][0];z+=h*A[i][j]*k[j][1]}k.push(F(w,z))}
+  let w5=W,z5=Z,w4=W,z4=Z;for(let i=0;i<7;i++){w5+=h*b5[i]*k[i][0];z5+=h*b5[i]*k[i][1];w4+=h*b4[i]*k[i][0];z4+=h*b4[i]*k[i][1]}
+  const sc=Math.max(1e-3,Math.abs(W),Math.abs(Z)),err=Math.hypot(w5-w4,z5-z4)/(tol*sc)+1e-300;
+  if(err<=1){W=w5;Z=z5;if(Math.hypot(W-lastP[0],Z-lastP[1])>2e-3*Math.max(1,Math.hypot(W,Z)/3)){pts.push([W,Z]);lastP=[W,Z]}}
+  h*=Math.min(5,Math.max(0.2,0.9*err**-0.2));if(!isFinite(W)||!isFinite(Z)){res='window';break}}
+ pts.push([W,Z]);return{pts,res,end:[W,Z]}}
+function profile(M){const {r}=M;const [W,Z,xs]=taylorStartP(M,1);const F=(W,Z)=>[NW(W,Z,r)*DZ(W,Z),NZ(W,Z,r)*DW(W,Z)];
+ const o=dp45(F,W,Z,(W,Z)=>W*W+Z*Z<1e-6?'inf':DZ(W,Z)<=0?'dz':DW(W,Z)<=0?'dw':'');o.pts=taylorPath(M,1,xs).concat(o.pts);o.xs=xs;return o}
+function taylorStartP(M,sgn){const {w,z}=M,N=z.length-1,n=Math.floor(M.k);let xi=0.05;
+ xi=0.3;for(let i=0;i<400;i++){const big=(Math.abs(z[N])+Math.abs(w[N]))*xi**N+(Math.abs(z[N-1])+Math.abs(w[N-1]))*xi**(N-1);if(!(big<1e-17))xi*=0.95;else break}
+ return[poly(w,N,sgn*xi),poly(z,N,sgn*xi),xi]}
+function taylorPath(M,sgn,xs){const N=M.z.length-1,o=[];for(let i=0;i<=30;i++){const x=sgn*xs*i/30;o.push([poly(M.w,N,x),poly(M.z,N,x)])}return o}
+const profCache=new Map();
+function prof(M){const key=M.k.toFixed(4);if(!profCache.has(key)){profCache.set(key,profile(M));if(profCache.size>40)profCache.delete(profCache.keys().next().value)}return profCache.get(key)}
+
+/* ===== drawing helpers ===== */
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function canvas(cv){const d=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*d;cv.height=H*d;const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return{g,W,H}}
+function niceTicks(a,b,n){const span=b-a,st0=span/n,p=10**Math.floor(Math.log10(st0)),e=st0/p,st=(e<1.5?1:e<3?2:e<7?5:10)*p;const t=[];for(let v=Math.ceil(a/st)*st;v<=b+1e-9*st;v+=st)t.push(+v.toPrecision(12));return t}
+const fmt=v=>Math.abs(v)>=1e4||(Math.abs(v)<1e-3&&v!==0)?v.toExponential(0):(+v.toPrecision(4)).toString();
+let clipN=0;
+function plot(el,o){const W=el.clientWidth,H=el.clientHeight;if(!W||!H)return;const nar=W<520;const m={l:nar?44:56,r:16,t:16,b:40};const iw=W-m.l-m.r,ih=H-m.t-m.b;
+ const X=v=>m.l+(v-o.x[0])/(o.x[1]-o.x[0])*iw,Y=v=>m.t+ih-(v-o.y[0])/(o.y[1]-o.y[0])*ih;const id='c'+(++clipN);
+ let s=`<defs><clipPath id="${id}"><rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}"/></clipPath></defs>`;
+ (o.xt||niceTicks(o.x[0],o.x[1],nar?4:7)).forEach(t=>{s+=`<line class="gr" x1="${X(t)}" x2="${X(t)}" y1="${m.t}" y2="${m.t+ih}"/><text class="tk" x="${X(t)}" y="${m.t+ih+16}" text-anchor="middle">${(o.xf||fmt)(t)}</text>`});
+ (o.yt||niceTicks(o.y[0],o.y[1],nar?4:6)).forEach(t=>{s+=`<line class="gr" x1="${m.l}" x2="${m.l+iw}" y1="${Y(t)}" y2="${Y(t)}"/><text class="tk" x="${m.l-6}" y="${Y(t)+4}" text-anchor="end">${(o.yf||fmt)(t)}</text>`});
+ s+=`<g clip-path="url(#${id})">`;
+ (o.band||[]).forEach(b=>{s+=`<rect x="${m.l}" width="${iw}" y="${Y(b.y1)}" height="${Math.max(0,Y(b.y0)-Y(b.y1))}" style="fill:${b.c};opacity:.16"/>`});
+ (o.h||[]).forEach(h=>{s+=`<line x1="${m.l}" x2="${m.l+iw}" y1="${Y(h.y)}" y2="${Y(h.y)}" style="stroke:${h.c};stroke-width:1.5;stroke-dasharray:${h.dash||'6 4'}"/>`});
+ (o.v||[]).forEach(h=>{s+=`<line y1="${m.t}" y2="${m.t+ih}" x1="${X(h.x)}" x2="${X(h.x)}" style="stroke:${h.c};stroke-width:1.5;stroke-dasharray:6 4"/>`});
+ (o.series||[]).forEach(se=>{const P=se.d.filter(p=>p.brk||isFinite(p[1]));
+  if(se.line!==false&&P.length>1){let path='';let pen=false;P.forEach(p=>{if(p.brk){pen=false;return}const yy=Math.max(-1e4,Math.min(1e4,Y(p[1])));path+=(pen?'L':'M')+X(p[0]).toFixed(1)+','+yy.toFixed(1);pen=true});s+=`<path d="${path}" style="fill:none;stroke:${se.c};stroke-width:${se.w||2};${se.dash?'stroke-dasharray:'+se.dash:''}"/>`}
+  if(se.dots)P.forEach(p=>{if(p.brk)return;const hol=se.hollow&&se.hollow(p);s+=`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="${se.r||2.6}" style="fill:${hol?'var(--bg)':se.c};stroke:${se.c};stroke-width:1.3"/>`})});
+ s+='</g>';
+ (o.labels||[]).forEach(l=>{const x=Math.min(m.l+iw-4,Math.max(m.l+4,X(l.x)));s+=`<text class="al" x="${x}" y="${Math.max(m.t+12,Y(l.y)-6)}" text-anchor="${l.a||'start'}" style="fill:${l.c||'var(--mut)'}">${l.t}</text>`});
+ s+=`<text class="al" x="${m.l+iw}" y="${H-6}" text-anchor="end">${o.xl||''}</text><text class="al" x="${m.l+4}" y="${m.t+12}">${o.yl||''}</text>`;
+ el.innerHTML=s}
+
+function lab(g,t,x,y,c){g.font='600 13px Inter,sans-serif';let bar=false;if(t[0]==='¯'){bar=true;t=t.slice(1)}const w=g.measureText(t).width;g.fillStyle='rgba(13,70,81,0.82)';g.fillRect(x-3,y-13,w+6,18);g.fillStyle=c;g.fillText(t,x,y);if(bar){const pw=g.measureText(t[0]).width;g.fillRect(x,y-12,pw,1.5)}}
+
+/* ===== break-a-barrier: scale one coefficient, near (Z_n) or far (Z_2) ===== */
+function nearCurve(M,box,pIdx,delta){const {w,r}=M,n=Math.floor(M.k);const z=M.z.slice();if(pIdx>=0&&pIdx<z.length)z[pIdx]+=delta;
+ const out=[];const span=Math.max(box[1]-box[0],box[3]-box[2]);let s=0;
+ for(let i=0;i<3000;i++){const W=poly(w,n,s),Z=poly(z,n,s);if(W<box[0]-span||W>box[1]+span||Z<box[2]-span||Z>box[3]+span||s>2)break;
+  const dw=dpoly(w,n,s),dz=dpoly(z,n,s),P=dz*NW(W,Z,r)*DZ(W,Z)-dw*NZ(W,Z,r)*DW(W,Z);out.push({s,W,Z,P});
+  const sp=Math.hypot(dw/(box[1]-box[0]),dz/(box[3]-box[2]));s+=Math.min(0.01,0.004/Math.max(sp,1e-9))}return out}
+function farCurve(M,pIdx,delta){const {w,z,W0,Z0,r}=M;
+ const z1=pIdx===1?z[1]+delta:z[1],z2=pIdx===2?z[2]+delta:z[2];const w1=w[1],w2=w[2];const out=[];
+ for(let i=0;i<=300;i++){const t=i/300;
+  const bw=W0+w1*t+w2*t*t-(W0+w1+w2)*t**3,bz=Z0+z1*t+z2*t*t-(Z0+z1+z2)*t**3;
+  const dbw=w1+2*w2*t-3*(W0+w1+w2)*t*t,dbz=z1+2*z2*t-3*(Z0+z1+z2)*t*t;
+  const P=dbz*NW(bw,bz,r)*DZ(bw,bz)-dbw*NZ(bw,bz,r)*DW(bw,bz);out.push({t,W:bw,Z:bz,P})}return out}
+const BR={2:{useReal:true,coefs:null}};
+const fmtD=d=>d===0?'0':(Math.abs(d)<1e-3||Math.abs(d)>=1e4?d.toExponential(3):d.toFixed(4));
+function userCurve(M,coefs,steps){const {W0,Z0,r,w}=M;const out=[];
+ for(let i=0;i<=steps;i++){const t=i/steps;let Z=Z0,dZ=0;
+  for(let k=1;k<=10;k++){const c=coefs[k-1];if(c){Z+=c*t**k;dZ+=k*c*t**(k-1)}}
+  const W=W0+w[1]*t,dW=w[1];
+  const P=dZ*NW(W,Z,r)*DZ(W,Z)-dW*NZ(W,Z,r)*DW(W,Z);out.push({t,W,Z,P})}
+ return out}
+function realBarrier(M){
+ // use a generous, zoom-independent window for the curves and all checks below — the display box
+ // is for drawing only, and must never change whether the construction verifies.
+ const BIGBOX=[M.W0-3,M.W0+3,M.Z0-3,M.Z0+3];
+ const n=Math.floor(M.k);
+ const svalBase=0.99*Math.abs(M.DZ2)/(2*bZ)/M.z[n];
+ const sval=svalBase>0?Math.pow(svalBase,1/(n-2)):NaN;
+ const nb=nearCurve(M,BIGBOX,2,0),fb=farCurve(M,2,0);
+ // both the near barrier's Taylor polynomial and the far barrier's cubic match the solution to 2nd
+ // order at P_s, so P(s) ~ s^(n+1) near the start: below floating-point noise for a good stretch
+ // past s=0. A buffer proportional to s_val (not a fixed number) keeps that noise out of every check,
+ // whatever K happens to make n. The far barrier touches 0 again at t=1 (it's built to reach P_infty
+ // exactly), so its own window excludes that end too.
+ const bufS=Math.max(0.1*(isFinite(sval)?sval:0),1e-4);
+ const nWin=isFinite(sval)&&sval>0?nb.filter(p=>p.s>=0.5*sval&&p.s<=0.97*sval):[];
+ const fWin=fb.filter(p=>p.t>=0.03&&p.t<=0.97);
+ const fieldOK=nWin.length>0&&nWin.every(p=>p.P>1e-9)&&fWin.length>0&&fWin.every(p=>p.P>1e-9);
+ // meeting point: closest approach between the two curves, away from the shared start at P_s (where
+ // they're trivially close just from matching to 2nd order) and within the near barrier's valid window.
+ const nbT=nb.filter(p=>p.s>=bufS&&isFinite(sval)&&p.s<=sval*0.97),fbT=fb.filter(p=>p.t>=bufS&&p.t<=0.97);
+ let minD=Infinity,bi=0,bj=0;
+ for(let i=0;i<nbT.length;i++)for(let j=0;j<fbT.length;j++){const d=Math.hypot(nbT[i].W-fbT[j].W,nbT[i].Z-fbT[j].Z);if(d<minD){minD=d;bi=i;bj=j}}
+ const sMeet=nbT.length?nbT[bi].s:0,tMeet=fbT.length?fbT[bj].t:1;
+ // the side condition is proved analytically (W_1Z_{n+1}-Z_1W_{n+1}<0), from the true profile's own
+ // Taylor coefficients at P_s — not by comparing two curves that coincide to within noise at this n.
+ const sideOK=(M.w[1]*M.z[n+1]-M.z[1]*M.w[n+1])<0;
+ return{nb,fb,sval,fieldOK,sideOK,near:nb.filter(p=>p.s<=sMeet),far:fb.filter(p=>p.t>=tMeet),minD}}
+// "correct side": for the same W, the profile's Z must be the larger one — exactly the lemma proved
+// a few sections back. Searches by nearest-W rather than nearest-(W,Z), matching that statement literally.
+function sideCheck(curvePts,profPts,skip){let flip=null;
+ for(const p of curvePts){const tt=p.t!==undefined?p.t:p.s;if(tt<skip)continue;
+  let best=null,bd=Infinity;for(const q of profPts){const d=(q[0]-p.W)**2;if(d<bd){bd=d;best=q}}
+  if(best&&best[1]<=p.Z){flip=tt;break}}
+ return{ok:flip==null,flipAt:flip}}
+function drawBreak(suf){const st=BR[suf];
+ // a fixed K chosen so the near barrier's valid window and the far barrier's sign condition both
+ // resolve well above floating-point noise, and the two curves meet cleanly within that window —
+ // the page's shared default (kFor(3.05,60)) lands on a degenerate, too-small-n case for this check.
+ const M=model(18);const pr=prof(M);
+ // box spans the whole smooth solution, from P_s out to P_infty=(0,0), with a little padding —
+ // not just a zoomed sliver near P_s — so both endpoints and the full curve are visible at once.
+ const allW=pr.pts.map(p=>p[0]),allZ=pr.pts.map(p=>p[1]);
+ const pad0=0.18;
+ const box=[Math.min(0,...allW)-pad0,Math.max(0,M.W0,...allW)+pad0,Math.min(0,M.Z0,...allZ)-pad0,Math.max(0,...allZ)+pad0];
+ if(!st.coefs)st.coefs=[M.z[1],0,0,0,0,0,0,0,0,0];
+ const panelU=$('brCoefs'+suf);if(panelU)panelU.hidden=st.useReal;
+ for(let k=1;k<=10;k++){const el=$('brC'+k+suf);if(el)el.value=st.coefs[k-1]}
+ const {g,W:CW,H:CH}=canvas($('cvBreak'+suf));if(!CW)return;const [w0,w1,z0,z1]=box;
+ const pad=8,fx=W=>pad+(W-w0)/(w1-w0)*(CW-2*pad),fy=Z=>CH-pad-(Z-z0)/(z1-z0)*(CH-2*pad);
+ g.fillStyle=matchMedia('(prefers-color-scheme: dark)').matches&&document.documentElement.dataset.theme!=='light'||document.documentElement.dataset.theme==='dark'?'#0a343c':'#0d4651';g.fillRect(0,0,CW,CH);
+ const ax=CW<520?13:20,ay=Math.round(ax*CH/CW);g.strokeStyle='rgba(255,255,255,0.32)';g.fillStyle='rgba(255,255,255,0.32)';g.lineWidth=1;
+ for(let i=0;i<ax;i++)for(let j=0;j<ay;j++){const W=w0+(i+.5)/ax*(w1-w0),Z=z0+(j+.5)/ay*(z1-z0);const sg=Math.sign(DW(W,Z)*DZ(W,Z))||1;let u=sg*NW(W,Z,M.r)*DZ(W,Z),v=sg*NZ(W,Z,M.r)*DW(W,Z);
+  let px=u/(w1-w0)*CW,py=-v/(z1-z0)*CH;const L=Math.hypot(px,py);if(L<1e-12)continue;px/=L;py/=L;const x=fx(W),y=fy(Z),len=9;
+  g.beginPath();g.moveTo(x-px*len/2,y-py*len/2);g.lineTo(x+px*len/2,y+py*len/2);g.stroke();g.beginPath();g.moveTo(x+px*len/2,y+py*len/2);g.lineTo(x+px*len/2-px*4-py*2.5,y+py*len/2-py*4+px*2.5);g.lineTo(x+px*len/2-px*4+py*2.5,y+py*len/2-py*4-px*2.5);g.fill()}
+ const line=(a,b,col,dash)=>{g.strokeStyle=col;g.lineWidth=1.8;g.setLineDash(dash);g.beginPath();g.moveTo(fx(w0),fy(-(1+a*w0)/b));g.lineTo(fx(w1),fy(-(1+a*w1)/b));g.stroke();g.setLineDash([])};
+ // sonic loci D_W=0 and D_Z=0 — background reference only, so muted and dashed/solid rather than the
+ // bold, saturated colors reserved above for "field crosses correctly / the wrong way".
+ line(aW,bW,'rgba(255,255,255,0.3)',[]);line(aZ,bZ,'rgba(255,255,255,0.5)',[7,5]);
+ const curveG=(pts,col,wd)=>{g.strokeStyle=col;g.lineWidth=wd;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(fx(p.W),fy(p.Z)):g.moveTo(fx(p.W),fy(p.Z)));g.stroke()};
+ const signed=(pts,wd,cp,cn)=>{g.lineWidth=wd;for(let i=1;i<pts.length;i++){g.strokeStyle=pts[i].P>-1e-12?cp:cn;g.beginPath();g.moveTo(fx(pts[i-1].W),fy(pts[i-1].Z));g.lineTo(fx(pts[i].W),fy(pts[i].Z));g.stroke()}};
+ const pt=(W,Z,t,c)=>{const x=fx(W),y=fy(Z);if(x<-10||x>CW+10||y<-10||y>CH+10)return;g.fillStyle=c;g.beginPath();g.arc(x,y,5,0,7);g.fill();g.strokeStyle='#0d4651';g.lineWidth=2;g.stroke();lab(g,t,x+8,y-8,'#fff')};
+ if(st.useReal){
+  const rb=realBarrier(M);
+  signed(rb.near,2.6,'#7fe0c5','#ff6b6b');signed(rb.far,2.2,'#9ec9ff','#ff6b6b');
+  curveG(pr.pts.map(p=>({W:p[0],Z:p[1]})),'#ffb59e',2.6);pt(M.W0,M.Z0,'Ps','#ffb59e');pt(0,0,'P∞','#fff');
+  const spanBox=Math.hypot(w1-w0,z1-z0),meet=rb.minD<0.04*spanBox;
+  $('brRead'+suf).innerHTML=`<b>The real near + far barrier, concatenated at the meeting point.</b><br>`
+   +`Field crosses in the correct direction the whole way: <span class="out ${rb.fieldOK?'ok':'bad'}">${rb.fieldOK?'yes':'no'}</span><br>`
+   +`Near and far barriers meet: <span class="out ${meet?'ok':'bad'}">${meet?'yes':'no'}</span><br>`
+   +`Profile stays on the correct side of the near barrier: <span class="out ${rb.sideOK?'ok':'bad'}">${rb.sideOK?'yes':'no'}</span>`;
+ } else {
+  const uc=userCurve(M,st.coefs,600);
+  signed(uc,2.6,'#7fe0c5','#ff6b6b');
+  curveG(pr.pts.map(p=>({W:p[0],Z:p[1]})),'#ffb59e',2.6);pt(M.W0,M.Z0,'Ps','#ffb59e');pt(0,0,'P∞','#fff');
+  const win=uc.filter(p=>p.t>=0.01&&Math.abs(p.P)>1e-11);
+  const bad=win.filter(p=>p.P<=0);
+  const fieldOK=win.length>0&&bad.length===0;
+  const side=sideCheck(uc,pr.pts,0.01);
+  const poly=st.coefs.map((c,i)=>c?`${c>0&&i>0?'+':''}${fmtD(c)}\\,t^{${i+1}}`:'').filter(Boolean).join('');
+  $('brRead'+suf).innerHTML=`<b>Your curve:</b> \\(Z(t)=Z_0${poly||''}\\), \\(W(t)=W_0+W_1t\\)<br>`
+   +`Field crosses it in the correct direction the whole way: <span class="out ${fieldOK?'ok':'bad'}">${fieldOK?'yes':bad.length?`no — wrong way from t ≈ ${bad[0].t.toFixed(3)}`:'no — curve is degenerate (zero derivative)'}</span><br>`
+   +`Profile stays on the correct side the whole way: <span class="out ${side.ok?'ok':'bad'}">${side.ok?'yes':`no — crosses at t ≈ ${side.flipAt.toFixed(3)}`}</span>`;
+ }
+ if(window.MathJax&&MathJax.typesetPromise)MathJax.typesetPromise([$('brRead'+suf)]).catch(()=>{})}
+
+/* ===== trapping region T: near barrier -> far barrier -> D_Z=0 segment -> far barrier -> P_infty,
+   closed off by the diagonal W=Z and the line W=W_0 ===== */
+function trapBox(M){return[Math.min(-0.6,-0.4),Math.max(1.7,M.W0+0.6),Math.min(-2.9,M.Z0-0.6),Math.max(0.9,M.W0+0.5)]}
+/* a single field arrow at a given (W,Z), drawn at pixel scale for whatever box fx/fy currently map */
+function fieldArrowAt(g,fx,fy,w0,w1,z0,z1,CW,CH,W,Z,r,len,color,lw){
+ const sg=Math.sign(DW(W,Z)*DZ(W,Z))||1;let u=sg*NW(W,Z,r)*DZ(W,Z),v=sg*NZ(W,Z,r)*DW(W,Z);
+ let px=u/(w1-w0)*CW,py=-v/(z1-z0)*CH;const L=Math.hypot(px,py);if(!(L>1e-12))return;px/=L;py/=L;
+ const x=fx(W),y=fy(Z);g.strokeStyle=color;g.fillStyle=color;g.lineWidth=lw||2.2;
+ g.beginPath();g.moveTo(x-px*len/2,y-py*len/2);g.lineTo(x+px*len/2,y+py*len/2);g.stroke();
+ g.beginPath();g.moveTo(x+px*len/2,y+py*len/2);g.lineTo(x+px*len/2-px*5-py*3,y+py*len/2-py*5+px*3);g.lineTo(x+px*len/2-px*5+py*3,y+py*len/2-py*5-px*3);g.fill()}
+/* "which way does the field cross this curve": pts[idx].P (set by nearCurve) is exactly the sign used
+   in the barrier argument, P = dz·N_W D_Z − dw·N_Z D_W, where (dw,dz) is the curve's own tangent.
+   The raw field vector is nearly tangent to the near barrier (the barrier is built tangent to the
+   dominant flow direction at P_s), so its actual normal component is tiny and numerically noisy —
+   subtracting off the tangential part amplifies that noise into a near-random direction, and even a
+   clean quarter-turn computed in data space doesn't look perpendicular on screen once the W and Z
+   axes are scaled differently. So: rotate the curve's own ON-SCREEN (pixel) tangent by a quarter turn
+   — a true right angle on screen, always — then use sign(P), mapped through the same data-to-pixel
+   scaling only to tell which of the two perpendicular directions is "inward", to pick the side. The
+   result is drawn as a short flag sticking straight out from the curve, not straddling it. */
+function crossingArrowAt(g,fx,fy,w0,w1,z0,z1,CW,CH,pts,idx,len,color,lw,label){
+ const i0=Math.max(0,idx-1),i1=Math.min(pts.length-1,idx+1);if(i0===i1)return;
+ const a=pts[i0],b=pts[i1],p=pts[idx];if(!(Math.abs(p.P)>1e-9))return;
+ const x=fx(p.W),y=fy(p.Z);
+ let tx=fx(b.W)-fx(a.W),ty=fy(b.Z)-fy(a.Z);const tl=Math.hypot(tx,ty);if(!(tl>1e-9))return;tx/=tl;ty/=tl;
+ const n1x=-ty,n1y=tx; // the two on-screen perpendiculars to the tangent are ±(n1x,n1y)
+ const dw=b.W-a.W,dz=b.Z-a.Z;
+ const mpx=dz/(w1-w0)*CW,mpy=dw/(z1-z0)*CH; // same quarter-turn, in data space, mapped through the box
+ const side=(mpx*n1x+mpy*n1y)>=0?1:-1;
+ const sgn=Math.sign(p.P)*side,px=sgn*n1x,py=sgn*n1y;
+ const gap=5,x1=x+px*gap,y1=y+py*gap,x2=x+px*(gap+len),y2=y+py*(gap+len);
+ g.strokeStyle=color;g.fillStyle=color;g.lineWidth=lw||2.6;
+ g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();
+ const hw=lw?lw*2.3:7,hh=lw?lw*1.4:4.2;
+ g.beginPath();g.moveTo(x2+px*hw*0.5,y2+py*hw*0.5);g.lineTo(x2-px*hw*0.5-py*hh,y2-py*hw*0.5+px*hh);g.lineTo(x2-px*hw*0.5+py*hh,y2-py*hw*0.5-px*hh);g.fill();
+ if(label){g.font='600 11px Inter,sans-serif';g.textAlign=px>=0?'left':'right';g.fillStyle=color;g.fillText(label,x2+px*10,y2+py*10+4)}}
+function drawTrap(){const M=model(kFor(3.05,60));const box=trapBox(M);
+ const {g,W:CW,H:CH}=canvas($('cvTrap'));if(!CW)return;const [w0,w1,z0,z1]=box;
+ const pad=8,fx=W=>pad+(W-w0)/(w1-w0)*(CW-2*pad),fy=Z=>CH-pad-(Z-z0)/(z1-z0)*(CH-2*pad);
+ g.fillStyle=matchMedia('(prefers-color-scheme: dark)').matches&&document.documentElement.dataset.theme!=='light'||document.documentElement.dataset.theme==='dark'?'#0a343c':'#0d4651';g.fillRect(0,0,CW,CH);
+ const ax=CW<520?16:24,ay=Math.round(ax*CH/CW);g.strokeStyle='rgba(255,255,255,0.26)';g.fillStyle='rgba(255,255,255,0.26)';g.lineWidth=1;
+ for(let i=0;i<ax;i++)for(let j=0;j<ay;j++){const W=w0+(i+.5)/ax*(w1-w0),Z=z0+(j+.5)/ay*(z1-z0);const sg=Math.sign(DW(W,Z)*DZ(W,Z))||1;let u=sg*NW(W,Z,M.r)*DZ(W,Z),v=sg*NZ(W,Z,M.r)*DW(W,Z);
+  let px=u/(w1-w0)*CW,py=-v/(z1-z0)*CH;const L=Math.hypot(px,py);if(L<1e-12)continue;px/=L;py/=L;const x=fx(W),y=fy(Z),len=9;
+  g.beginPath();g.moveTo(x-px*len/2,y-py*len/2);g.lineTo(x+px*len/2,y+py*len/2);g.stroke();g.beginPath();g.moveTo(x+px*len/2,y+py*len/2);g.lineTo(x+px*len/2-px*4-py*2.5,y+py*len/2-py*4+px*2.5);g.lineTo(x+px*len/2-px*4+py*2.5,y+py*len/2-py*4-px*2.5);g.fill()}
+ const line=(fx2,fy2,w02,w12,a,b,col,dash)=>{g.strokeStyle=col;g.lineWidth=1.4;g.setLineDash(dash);g.beginPath();g.moveTo(fx2(w02),fy2(-(1+a*w02)/b));g.lineTo(fx2(w12),fy2(-(1+a*w12)/b));g.stroke();g.setLineDash([])};
+ line(fx,fy,w0,w1,aW,bW,'rgba(255,107,107,0.55)',[6,5]);line(fx,fy,w0,w1,aZ,bZ,'rgba(255,255,255,0.5)',[6,5]);
+ const curveG=(pts,col,wd,fx2,fy2)=>{fx2=fx2||fx;fy2=fy2||fy;if(pts.length<2)return;g.strokeStyle=col;g.lineWidth=wd;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(fx2(p.W??p[0]),fy2(p.Z??p[1])):g.moveTo(fx2(p.W??p[0]),fy2(p.Z??p[1])));g.stroke()};
+ const nc=nearCurve(M,box,1,0),fc=farCurve(M,1,0);
+ // the near barrier is only proven valid on (0,s_val); switch to the far barrier there rather than
+ // hunting for an exact crossing — the two are tangent at P_s, so for small n they stay close for a
+ // long stretch and a closest-approach search degenerates to the shared start point.
+ const n=Math.floor(M.k);
+ const svalBase=0.99*Math.abs(M.DZ2)/(2*bZ)/M.z[n];
+ const svalN=svalBase>0?Math.pow(svalBase,1/(n-2)):NaN;
+ const sInt=isFinite(svalN)&&svalN>0?Math.min(svalN,nc.length?nc[nc.length-1].s:svalN):(nc.length?nc[Math.floor(nc.length*0.3)].s:0);
+ let bi=0,bd0=Infinity;for(let i=0;i<nc.length;i++){const d=Math.abs(nc[i].s-sInt);if(d<bd0){bd0=d;bi=i}}
+ let bj=0,bd=Infinity;for(let j=0;j<fc.length;j++){const d=(nc[bi].W-fc[j].W)**2+(nc[bi].Z-fc[j].Z)**2;if(d<bd){bd=d;bj=j}}
+ // where the far barrier crosses the sonic line D_Z=0, after the intersection point
+ const crossings=[];for(let j=bj;j<fc.length-1;j++){const a=DZ(fc[j].W,fc[j].Z),b=DZ(fc[j+1].W,fc[j+1].Z);if((a<0)!==(b<0))crossings.push(j)}
+ const jIn=crossings[0]??(fc.length-1),jOut=crossings[1]??jIn;
+ const corner=[M.W0,M.W0];
+ // fill the interior of T
+ g.beginPath();g.moveTo(fx(nc[0].W),fy(nc[0].Z));
+ for(let i=1;i<=bi;i++)g.lineTo(fx(nc[i].W),fy(nc[i].Z));
+ for(let j=bj;j<=jIn;j++)g.lineTo(fx(fc[j].W),fy(fc[j].Z));
+ g.lineTo(fx(fc[jOut].W),fy(fc[jOut].Z));
+ for(let j=jOut;j<fc.length;j++)g.lineTo(fx(fc[j].W),fy(fc[j].Z));
+ g.lineTo(fx(corner[0]),fy(corner[1]));g.lineTo(fx(M.W0),fy(M.Z0));g.closePath();
+ g.fillStyle='rgba(127,224,197,0.12)';g.fill();
+ // closing edges: diagonal W=Z, and the line W=W_0
+ g.strokeStyle='rgba(255,255,255,0.45)';g.lineWidth=2;g.setLineDash([3,4]);
+ g.beginPath();g.moveTo(fx(0),fy(0));g.lineTo(fx(corner[0]),fy(corner[1]));g.lineTo(fx(M.W0),fy(M.Z0));g.stroke();g.setLineDash([]);
+ // the three boundary pieces of T, each its own color
+ curveG(fc.slice(bj,jIn+1),'#9ec9ff',2.4);
+ g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.moveTo(fx(fc[jIn].W),fy(fc[jIn].Z));g.lineTo(fx(fc[jOut].W),fy(fc[jOut].Z));g.stroke();
+ curveG(fc.slice(jOut),'#9ec9ff',2.4);
+ const pr=prof(M);curveG(pr.pts.map(p=>({W:p[0],Z:p[1]})),'#ffb59e',2.6);
+ // near barrier drawn last (on top of the profile) so the arrows visibly start on the barrier itself,
+ // not the profile curve they're nearly coincident with near P_s
+ curveG(nc.slice(0,bi+1),'#7fe0c5',3.4);
+ // explicit field arrows right on the near barrier: this is the P^nl_n>0 crossing check made visible,
+ // not just the generic background field, which is too faint/small to read at this spot
+ [0.2,0.5,0.8].forEach(f=>{const idx=Math.min(bi,Math.round(f*bi));crossingArrowAt(g,fx,fy,w0,w1,z0,z1,CW,CH,nc,idx,22,'#ffe066',3,f===0.5?'field crosses inward':null)});
+ const pt=(W,Z,t,c)=>{const x=fx(W),y=fy(Z);if(x<-10||x>CW+10||y<-10||y>CH+10)return;g.fillStyle=c;g.beginPath();g.arc(x,y,5,0,7);g.fill();g.strokeStyle='#0d4651';g.lineWidth=2;g.stroke();lab(g,t,x+8,y-8,'#fff')};
+ pt(M.W0,M.Z0,'Ps','#ffb59e');pt(0,0,'P∞','#fff');
+ if(crossings.length){pt(fc[jIn].W,fc[jIn].Z,'in','#fff');if(jOut!==jIn)pt(fc[jOut].W,fc[jOut].Z,'out','#fff')}
+ const mid=nc[Math.max(1,Math.floor(bi*0.55))];lab(g,'①',fx(mid.W)+10,fy(mid.Z)-6,'#7fe0c5');
+ const midFar=fc[Math.floor((bj+jIn)/2)];lab(g,'②',fx(midFar.W)-18,fy(midFar.Z)+16,'#9ec9ff');
+ lab(g,'③',fx(nc[bi].W)+10,fy(nc[bi].Z)+16,'#fff');
+
+ // ===== inset: zoom on the near barrier near P_s, where it's too small to read at full scale =====
+ const nci=nc.slice(0,bi+1);
+ let iw0=Infinity,iw1=-Infinity,iz0=Infinity,iz1=-Infinity;
+ const iupd=(W,Z)=>{if(W<iw0)iw0=W;if(W>iw1)iw1=W;if(Z<iz0)iz0=Z;if(Z>iz1)iz1=Z};
+ nci.forEach(p=>iupd(p.W,p.Z));iupd(M.W0,M.Z0);
+ // pull in whichever stretch of the true profile sits over this same W-range, so the inset can show
+ // the smooth solution running above the near barrier, not just the barrier on its own
+ const prNear=pr.pts.filter(p=>p[0]>=iw0&&p[0]<=iw1);
+ prNear.forEach(p=>iupd(p[0],p[1]));
+ const imw=(iw1-iw0)*0.18||0.05,imz=(iz1-iz0)*0.18||0.05;iw0-=imw;iw1+=imw;iz0-=imz;iz1+=imz;
+ const insW=Math.min(0.42*CW,220),insH=Math.min(0.42*CH,200),insX=10,insY=10,ipad=10;
+ const fx2=W=>insX+ipad+(W-iw0)/(iw1-iw0)*(insW-2*ipad),fy2=Z=>insY+insH-ipad-(Z-iz0)/(iz1-iz0)*(insH-2*ipad);
+ // dashed outline on the main figure showing what the inset is zoomed on
+ g.strokeStyle='rgba(255,255,255,0.55)';g.lineWidth=1.3;g.setLineDash([3,3]);
+ g.strokeRect(fx(iw0),fy(iz1),fx(iw1)-fx(iw0),fy(iz0)-fy(iz1));g.setLineDash([]);
+ g.fillStyle='rgba(10,40,46,0.96)';g.fillRect(insX,insY,insW,insH);
+ g.save();g.beginPath();g.rect(insX,insY,insW,insH);g.clip();
+ const iax=10,iay=Math.round(iax*insH/insW);g.strokeStyle='rgba(255,255,255,0.3)';g.fillStyle='rgba(255,255,255,0.3)';g.lineWidth=1;
+ for(let i=0;i<iax;i++)for(let j=0;j<iay;j++){const W=iw0+(i+.5)/iax*(iw1-iw0),Z=iz0+(j+.5)/iay*(iz1-iz0);fieldArrowAt(g,fx2,fy2,iw0,iw1,iz0,iz1,insW,insH,W,Z,M.r,7,'rgba(255,255,255,0.3)',1)}
+ line(fx2,fy2,iw0,iw1,aZ,bZ,'rgba(255,255,255,0.5)',[5,4]);
+ curveG(prNear,'#ffb59e',2.8,fx2,fy2);
+ curveG(nci,'#7fe0c5',3.4,fx2,fy2);
+ [0.2,0.5,0.8].forEach(f=>{const idx=Math.min(bi,Math.round(f*bi));crossingArrowAt(g,fx2,fy2,iw0,iw1,iz0,iz1,insW,insH,nc,idx,16,'#ffe066',2.6,f===0.5?'inward':null)});
+ const ipt=(W,Z,t,c)=>{const x=fx2(W),y=fy2(Z);g.fillStyle=c;g.beginPath();g.arc(x,y,4.5,0,7);g.fill();g.strokeStyle='#0d4651';g.lineWidth=1.6;g.stroke();lab(g,t,x+7,y-7,'#fff')};
+ ipt(M.W0,M.Z0,'Ps','#ffb59e');ipt(nc[bi].W,nc[bi].Z,'①','#7fe0c5');
+ g.restore();
+ g.strokeStyle='rgba(255,255,255,0.4)';g.lineWidth=1.5;g.strokeRect(insX,insY,insW,insH);
+ g.fillStyle='rgba(255,255,255,0.8)';g.font='600 11px Inter,sans-serif';g.textAlign='left';g.fillText('zoom: near barrier at Pₛ',insX+ipad,insY+14)}
+
+/* simple preview, for the Outline section: both barrier curves in full, plus field and profile, no trapping-region fill or labels */
+function drawOutBar(){const M=model(kFor(3.05,60));const n=Math.floor(M.k);
+ /* truncate the near barrier at its proven validity bound s_val (see "Finishing the proof" below) —
+    the raw Taylor curve overshoots wildly past that, which would otherwise wreck the auto-fit zoom */
+ const svalBase=0.99*Math.abs(M.DZ2)/(2*bZ)/M.z[n];const svalN=svalBase>0?Math.pow(svalBase,1/(n-2)):NaN;
+ const ncFull=nearCurve(M,trapBox(M),1,0),fc=farCurve(M,1,0),pr=prof(M);
+ const sCut=isFinite(svalN)&&svalN>0?Math.min(svalN,ncFull.length?ncFull[ncFull.length-1].s:svalN):(ncFull.length?ncFull[Math.floor(ncFull.length*0.3)].s:0);
+ const nc=ncFull.filter(p=>p.s<=sCut*1.08);
+ let w0=Infinity,w1=-Infinity,z0=Infinity,z1=-Infinity;
+ const upd=(W,Z)=>{if(W<w0)w0=W;if(W>w1)w1=W;if(Z<z0)z0=Z;if(Z>z1)z1=Z};
+ nc.forEach(p=>upd(p.W,p.Z));fc.forEach(p=>upd(p.W,p.Z));pr.pts.forEach(p=>upd(p[0],p[1]));upd(0,0);
+ const mw=(w1-w0)*0.1||0.3,mz=(z1-z0)*0.1||0.3;const box=[w0-mw,w1+mw,z0-mz,z1+mz];
+ const {g,W:CW,H:CH}=canvas($('cvOutBar'));if(!CW)return;const [bw0,bw1,bz0,bz1]=box;
+ const pad=8,fx=W=>pad+(W-bw0)/(bw1-bw0)*(CW-2*pad),fy=Z=>CH-pad-(Z-bz0)/(bz1-bz0)*(CH-2*pad);
+ g.fillStyle=plateCol();g.fillRect(0,0,CW,CH);
+ const ax=CW<520?14:20,ay=Math.round(ax*CH/CW);g.strokeStyle='rgba(255,255,255,0.24)';g.fillStyle='rgba(255,255,255,0.24)';g.lineWidth=1;
+ for(let i=0;i<ax;i++)for(let j=0;j<ay;j++){const W=bw0+(i+.5)/ax*(bw1-bw0),Z=bz0+(j+.5)/ay*(bz1-bz0);const sg=Math.sign(DW(W,Z)*DZ(W,Z))||1;let u=sg*NW(W,Z,M.r)*DZ(W,Z),v=sg*NZ(W,Z,M.r)*DW(W,Z);
+  let px=u/(bw1-bw0)*CW,py=-v/(bz1-bz0)*CH;const L=Math.hypot(px,py);if(L<1e-12)continue;px/=L;py/=L;const x=fx(W),y=fy(Z),len=8;
+  g.beginPath();g.moveTo(x-px*len/2,y-py*len/2);g.lineTo(x+px*len/2,y+py*len/2);g.stroke();g.beginPath();g.moveTo(x+px*len/2,y+py*len/2);g.lineTo(x+px*len/2-px*3.5-py*2.2,y+py*len/2-py*3.5+px*2.2);g.lineTo(x+px*len/2-px*3.5+py*2.2,y+py*len/2-py*3.5-px*2.2);g.fill()}
+ const curveG=(pts,col,wd,fx2,fy2)=>{fx2=fx2||fx;fy2=fy2||fy;if(pts.length<2)return;g.strokeStyle=col;g.lineWidth=wd;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(fx2(p.W??p[0]),fy2(p.Z??p[1])):g.moveTo(fx2(p.W??p[0]),fy2(p.Z??p[1])));g.stroke()};
+ curveG(fc,'#9ec9ff',2.4);
+ curveG(pr.pts.map(p=>({W:p[0],Z:p[1]})),'#ffb59e',2.6);
+ // near barrier drawn last (on top of the profile) so the arrows visibly start on the barrier itself,
+ // not the profile curve they're nearly coincident with near P_s
+ curveG(nc,'#7fe0c5',3.4);
+ // explicit field arrows right on the near barrier, instead of relying on the faint background grid
+ [0.2,0.5,0.8].forEach(f=>{const idx=Math.min(nc.length-1,Math.round(f*(nc.length-1)));crossingArrowAt(g,fx,fy,bw0,bw1,bz0,bz1,CW,CH,nc,idx,20,'#ffe066',3,f===0.5?'field crosses inward':null)});
+ const pt=(W,Z,t,c)=>{const x=fx(W),y=fy(Z);if(x<-10||x>CW+10||y<-10||y>CH+10)return;g.fillStyle=c;g.beginPath();g.arc(x,y,5,0,7);g.fill();g.strokeStyle='#0d4651';g.lineWidth=2;g.stroke();lab(g,t,x+8,y-8,'#fff')};
+ pt(M.W0,M.Z0,'Ps','#ffb59e');pt(0,0,'P∞','#fff');
+
+ // ===== inset: zoom on the near barrier near P_s, too small to read at full scale =====
+ let iw0=Infinity,iw1=-Infinity,iz0=Infinity,iz1=-Infinity;
+ const iupd=(W,Z)=>{if(W<iw0)iw0=W;if(W>iw1)iw1=W;if(Z<iz0)iz0=Z;if(Z>iz1)iz1=Z};
+ nc.forEach(p=>iupd(p.W,p.Z));iupd(M.W0,M.Z0);
+ // pull in whichever stretch of the true profile sits over this same W-range, so the inset can show
+ // the smooth solution running above the near barrier, not just the barrier on its own
+ const prNear=pr.pts.filter(p=>p[0]>=iw0&&p[0]<=iw1);
+ prNear.forEach(p=>iupd(p[0],p[1]));
+ const imw=(iw1-iw0)*0.18||0.05,imz=(iz1-iz0)*0.18||0.05;iw0-=imw;iw1+=imw;iz0-=imz;iz1+=imz;
+ const insW=Math.min(0.42*CW,220),insH=Math.min(0.42*CH,200),insX=10,insY=10,ipad=10;
+ const fx2=W=>insX+ipad+(W-iw0)/(iw1-iw0)*(insW-2*ipad),fy2=Z=>insY+insH-ipad-(Z-iz0)/(iz1-iz0)*(insH-2*ipad);
+ g.strokeStyle='rgba(255,255,255,0.55)';g.lineWidth=1.3;g.setLineDash([3,3]);
+ g.strokeRect(fx(iw0),fy(iz1),fx(iw1)-fx(iw0),fy(iz0)-fy(iz1));g.setLineDash([]);
+ g.fillStyle=plateCol();g.fillRect(insX,insY,insW,insH);
+ g.save();g.beginPath();g.rect(insX,insY,insW,insH);g.clip();
+ const iax=10,iay=Math.round(iax*insH/insW);g.strokeStyle='rgba(255,255,255,0.3)';g.fillStyle='rgba(255,255,255,0.3)';g.lineWidth=1;
+ for(let i=0;i<iax;i++)for(let j=0;j<iay;j++){const W=iw0+(i+.5)/iax*(iw1-iw0),Z=iz0+(j+.5)/iay*(iz1-iz0);fieldArrowAt(g,fx2,fy2,iw0,iw1,iz0,iz1,insW,insH,W,Z,M.r,7,'rgba(255,255,255,0.3)',1)}
+ curveG(prNear,'#ffb59e',2.8,fx2,fy2);
+ curveG(nc,'#7fe0c5',3.4,fx2,fy2);
+ [0.2,0.5,0.8].forEach(f=>{const idx=Math.min(nc.length-1,Math.round(f*(nc.length-1)));crossingArrowAt(g,fx2,fy2,iw0,iw1,iz0,iz1,insW,insH,nc,idx,16,'#ffe066',2.6,f===0.5?'inward':null)});
+ const ipt=(W,Z,t,c)=>{const x=fx2(W),y=fy2(Z);g.fillStyle=c;g.beginPath();g.arc(x,y,4.5,0,7);g.fill();g.strokeStyle='#0d4651';g.lineWidth=1.6;g.stroke();lab(g,t,x+7,y-7,'#fff')};
+ ipt(M.W0,M.Z0,'Ps','#ffb59e');
+ g.restore();
+ g.strokeStyle='rgba(255,255,255,0.4)';g.lineWidth=1.5;g.strokeRect(insX,insY,insW,insH);
+ g.fillStyle='rgba(255,255,255,0.8)';g.font='600 11px Inter,sans-serif';g.textAlign='left';g.fillText('zoom: near barrier at Pₛ',insX+ipad,insY+14)}
+
+/* ===== generic integrator & extra branches ===== */
+function integ(r,W,Z,back,maxIt){const sg=back?-1:1;const F=(W,Z)=>[sg*NW(W,Z,r)*DZ(W,Z),sg*NZ(W,Z,r)*DW(W,Z)];
+ const z0=Math.sign(DZ(W,Z)),w0=Math.sign(DW(W,Z));
+ return dp45(F,W,Z,(W,Z,it)=>{const H=(W-Z)/2;if(W*W+Z*Z<1e-6)return'inf';if(H>3000)return'top';if(Math.abs(W)+Math.abs(Z)>1e6)return'window';if(it>2&&Math.sign(DZ(W,Z))!==z0)return'dz';if(it>2&&Math.sign(DW(W,Z))!==w0)return'dw';
+  const f=F(W,Z);if(Math.hypot(f[0],f[1])<1e-12&&it>50)return'eq';return''},maxIt||60000)}
+function taylorStart(M,sgn){return taylorStartP(M,sgn)}
+function taylorStartOld(M,sgn){const {w,z}=M,N=z.length-1,n=Math.floor(M.k);let xi=0.05;
+ for(let i=0;i<200;i++){const big=Math.max(Math.abs(z[N]),Math.abs(w[N]))*xi**N,mid=Math.abs(z[Math.min(N,n+1)])*xi**Math.min(N,n+1);if(big>1e-18||mid>1e-4)xi*=0.9;else break}
+ return[poly(w,N,sgn*xi),poly(z,N,sgn*xi)]}
+const toUS=(W,Z)=>[(W+Z)/2,(W-Z)/2];
+function desc(o,lbl){lbl=lbl||'S';const [U,S]=toUS(...o.end);return o.res=='inf'?'reaches P∞':o.res=='dz'?`meets D<sub>Z</sub>=0 at (U,${lbl}) = (${U.toFixed(2)}, ${S.toFixed(2)})`:o.res=='dw'?'meets D<sub>W</sub>=0':o.res=='top'?`climbs to ${lbl} = ∞ at U ≈ ${U.toFixed(1)}, away from P₀`:o.res=='eq'?'stalls at another equilibrium':'leaves the computed range'}
+
+
+/* ===== two directions (U,S) ===== */
+let dirMode='minus',dProg=1,dirData={};
+function dirBranches(mode){if(dirData[mode])return dirData[mode];const r=R_MATCH;const {M,pos,neg}=fullModel(r);let far,ori;
+ if(mode=='minus'){far=pos;ori=neg}else{const vn=Math.hypot(M.W1,M.Zp),e=1e-4;const a=[M.W0+e*M.W1/vn,M.Z0+e*M.Zp/vn],b=[M.W0-e*M.W1/vn,M.Z0-e*M.Zp/vn];
+  const A=integ(r,a[0],a[1],false),B=integ(r,b[0],b[1],false);A.pts.unshift([M.W0,M.Z0]);B.pts.unshift([M.W0,M.Z0]);
+  [far,ori]=DZ(...a)>0?[A,B]:[B,A]}
+ return dirData[mode]={M,far,ori}}
+function drawDir(){const cv=$('cvDir');const {g,W:CW,H:CH}=canvas(cv);if(!CW)return;const r=R_MATCH;const sa=Math.sqrt(al);const {M,far,ori}=dirBranches(dirMode);
+ const nar=CW<520,pl=nar?40:50,pr=14,pt=26,pb=nar?40:46;const X=U=>U/(1+Math.abs(U)),Y=S=>S/(1+S);
+ const px=x=>pl+(x+1)/2*(CW-pl-pr),py=y=>CH-pb-y*(CH-pt-pb);const P=(W,Z)=>{const U=(W+Z)/2,S=sa*(W-Z)/2;return[px(X(U)),py(Y(Math.max(S,0)))]};
+ const inv=(x,y)=>{const U=x/(1-Math.abs(x)),S=y/(1-y),H=S/sa;return[U+H,U-H]};
+ g.fillStyle=plateCol();g.fillRect(0,0,CW,CH);
+ g.strokeStyle='rgba(255,255,255,0.13)';g.lineWidth=1;g.fillStyle='rgba(255,255,255,0.7)';g.font='12px Inter,sans-serif';
+ [-1,-0.5,0,0.5,1].forEach(x=>{g.beginPath();g.moveTo(px(x),py(0));g.lineTo(px(x),py(1));g.stroke();g.textAlign='center';g.fillText(x.toFixed(1),px(x),py(0)+16)});
+ [0,0.25,0.5,0.75,1].forEach(y=>{g.beginPath();g.moveTo(px(-1),py(y));g.lineTo(px(1),py(y));g.stroke();g.textAlign='right';g.fillText(y.toFixed(2),pl-6,py(y)+4)});
+ g.textAlign='center';g.fillText('X = U/(1+|U|)',px(0),CH-8);g.textAlign='left';g.fillText('Y = S/(1+S)',pl,14);
+ if($('dField').checked){const ax=nar?14:26,ay=Math.round(ax*0.7);g.strokeStyle='rgba(255,255,255,0.38)';g.fillStyle='rgba(255,255,255,0.38)';
+  for(let i=0;i<ax;i++)for(let j=0;j<ay;j++){const x=-1+(i+.5)/ax*2,y=(j+.5)/ay;const [W,Z]=inv(x,y);const fW=NW(W,Z,r)*DZ(W,Z),fZ=NZ(W,Z,r)*DW(W,Z);
+   const U=(W+Z)/2,S=sa*(W-Z)/2;let dx=(fW+fZ)/2/(1+Math.abs(U))**2*(CW-pl-pr)/2,dy=-sa*(fW-fZ)/2/(1+S)**2*(CH-pt-pb);const L=Math.hypot(dx,dy);if(!(L>0))continue;dx/=L;dy/=L;const cx=px(x),cy=py(y),len=10;
+   g.beginPath();g.moveTo(cx-dx*len/2,cy-dy*len/2);g.lineTo(cx+dx*len/2,cy+dy*len/2);g.stroke();g.beginPath();g.moveTo(cx+dx*len/2,cy+dy*len/2);g.lineTo(cx+dx*len/2-dx*4-dy*2.5,cy+dy*len/2-dy*4+dx*2.5);g.lineTo(cx+dx*len/2-dx*4+dy*2.5,cy+dy*len/2-dy*4-dx*2.5);g.fill()}}
+ [[1,'rgba(255,255,255,0.9)'],[-1,'#ff6b6b']].forEach(([sg,c])=>{g.strokeStyle=c;g.lineWidth=1.8;g.setLineDash([7,5]);g.beginPath();let pen=false;for(let i=0;i<=800;i++){const x=-0.9995+i/800*1.999,U=x/(1-Math.abs(x)),S=sg*(1+U)/sa;if(S<0){pen=false;continue}const yy=py(Y(S)),xx=px(x);pen?g.lineTo(xx,yy):g.moveTo(xx,yy);pen=true}g.stroke();g.setLineDash([])});
+ const curve=(o,col)=>{const n=Math.max(2,Math.floor(dProg*o.pts.length));g.strokeStyle=col;g.lineWidth=3.2;g.beginPath();o.pts.slice(0,n).forEach((p,i)=>{const [a,b]=P(...p);i?g.lineTo(a,b):g.moveTo(a,b)});g.stroke();return n>=o.pts.length};
+ const oriOK=ori.res=='top'&&Math.abs((ori.end[0]+ori.end[1])/2-U0)<0.05,farOK=far.res=='inf';
+ const d1=curve(far,'#7fe0c5'),d2=curve(ori,'#ffb59e');
+ if(d2){const [a,b]=P(...ori.end);if(oriOK){g.strokeStyle='#ffb59e';g.lineWidth=3.2;g.beginPath();g.moveTo(a,b);g.lineTo(px(X(U0)),py(1));g.stroke()}else{g.fillStyle='#ff6b6b';g.beginPath();g.arc(a,b,6,0,7);g.fill();lab(g,'singular',a+9,b+4,'#ffb4b4')}}
+ if(d1&&!farOK){const [a,b]=P(...far.end);g.fillStyle='#ff6b6b';g.beginPath();g.arc(a,b,6,0,7);g.fill()}
+ // tangent arrows
+ const L=0.06;[[M.W1,M.Z1,'v₋'],[M.W1,M.Zp,'v₊']].forEach(([a,b,t])=>{const nn=Math.hypot(a,b),sel=(t=='v₋')==(dirMode=='minus');const [x0,y0]=P(M.W0-a/nn*L,M.Z0-b/nn*L),[x1,y1]=P(M.W0+a/nn*L,M.Z0+b/nn*L);g.strokeStyle=sel?'#fff':'rgba(255,255,255,0.4)';g.lineWidth=sel?2:1.2;g.setLineDash([3,3]);g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.setLineDash([]);if(sel)lab(g,t,x1+4,y1+14,'#fff')});
+ const dot=(x,y,t,c,dx,dy)=>{g.fillStyle=c;g.beginPath();g.arc(x,y,6,0,7);g.fill();g.strokeStyle='#0d4651';g.lineWidth=2;g.stroke();lab(g,t,x+(dx||9),y+(dy||-9),'#fff')};
+ dot(px(X(U0)),py(1),'P₀','#ffd8a8',9,16);const [a1,b1]=P(M.W0,M.Z0);dot(a1,b1,'Ps','#fff');const [a2,b2]=P(0,0);dot(a2,b2,'P∞','#fff',9,-10);
+ const done=dProg>=1;const ok=farOK&&oriOK;
+ $('dirRead').innerHTML=!done?'Tracing…':`Far-field branch: <b>${farOK?'reaches P∞':desc(far)}</b><br>Origin branch: <b>${oriOK?'reaches P₀':desc(ori)}</b><br><span class="out ${ok?'ok':'bad'}" style="margin-top:8px">${ok?'smooth solution P₀ → Ps → P∞':'no smooth connection'}</span>`;
+ $('dirNote').innerHTML=dirMode=='minus'?'<b>We choose v₋.</b> At the matched exponent this direction joins the regular centre P₀ to the far field P∞, smoothly through P<sub>s</sub>.':'<b>v₊ fails.</b> Its far-field branch can still reach P∞, but on the origin side the trajectory runs into a singular denominator (D<sub>W</sub> = 0) before reaching P₀. This is why the construction leaves P<sub>s</sub> along v₋.'}
+function animDir(){$('dProg').value=0;dProg=0;if(reduce){dProg=1;$('dProg').value=1;drawDir();return}const t0=performance.now();const st=t=>{dProg=Math.min(1,(t-t0)/1400);$('dProg').value=dProg;try{drawDir()}catch(e){console.error(e)}if(dProg<1)requestAnimationFrame(st)};requestAnimationFrame(st)}
+/* ===== full matched profile ===== */
+const R_GUESS=1.0794043931625;
+const U0of=r=>{const F=U=>{const H=1e9,W=U+H,Z=U-H;return(NW(W,Z,r)/DW(W,Z)+NZ(W,Z,r)/DZ(W,Z))/2};let a=-1,b=0.5;for(let i=0;i<80;i++){const m=(a+b)/2;(F(m)>0)?a=m:b=m}return(a+b)/2};
+function negSide(r){const k0=setup(r).k;const M=coeffs(r,Math.min(190,Math.floor(3*k0)+20));const [W,Z]=taylorStart(M,-1);const o=integ(r,W,Z,false);const U=(o.end[0]+o.end[1])/2;
+ if(o.res=='dw')return -1;if(o.res=='dz')return 1;return U<U0of(r)?-1:1}
+const R_MATCH=(()=>{let lo=R_GUESS-1e-8,hi=R_GUESS+1e-8;if(negSide(lo)>0||negSide(hi)<0)return R_GUESS;for(let i=0;i<70;i++){const m=(lo+hi)/2;if(hi-lo<4e-16)break;negSide(m)<0?lo=m:hi=m}return(lo+hi)/2})();
+const U0=U0of(R_MATCH);
+let drT=0,traces=[];const fullCache=new Map();
+const drVal=t=>t===0?0:Math.sign(t)*10**(-12+9*Math.abs(t));
+function fullModel(r){const key=r.toPrecision(16);if(fullCache.has(key))return fullCache.get(key);const k0=setup(r).k;const M=coeffs(r,Math.min(190,Math.floor(3*k0)+20));
+ const pos=profile(M);const [W,Z,xs]=taylorStart(M,-1);const neg=integ(r,W,Z,false);neg.pts=taylorPath(M,-1,xs).concat(neg.pts);const o={M,pos,neg};fullCache.set(key,o);if(fullCache.size>30)fullCache.delete(fullCache.keys().next().value);return o}
+const plateCol=()=>matchMedia('(prefers-color-scheme: dark)').matches&&document.documentElement.dataset.theme!=='light'||document.documentElement.dataset.theme==='dark'?'#0a343c':'#0d4651';
+let fullMap=null;
+function drawFull(){const cv=$('cvFull');const {g,W:CW,H:CH}=canvas(cv);if(!CW)return;const dr=drVal(drT);const r=R_MATCH+dr;const {M,pos,neg}=fullModel(r);
+ $('drV').textContent=dr===0?'0 (matched)':dr.toExponential(1);
+ const nar=CW<520,pl=nar?40:50,pr=14,pt=26,pb=nar?40:46;const X=U=>U/(1+Math.abs(U)),Y=H=>H/(1+H);
+ const px=x=>pl+(x+1)/2*(CW-pl-pr),py=y=>CH-pb-y*(CH-pt-pb);const P=(W,Z)=>{const U=(W+Z)/2,H=(W-Z)/2;return[px(X(U)),py(Y(Math.max(H,0)))]};
+ const inv=(x,y)=>{const U=x/(1-Math.abs(x)),H=y/(1-y);return[U+H,U-H]};fullMap={px,py,pl,pr,pt,pb,CW,CH,inv};
+ g.fillStyle=plateCol();g.fillRect(0,0,CW,CH);
+ // grid + ticks
+ g.strokeStyle='rgba(255,255,255,0.13)';g.lineWidth=1;g.fillStyle='rgba(255,255,255,0.7)';g.font='12px Inter,sans-serif';
+ [-1,-0.5,0,0.5,1].forEach(x=>{g.beginPath();g.moveTo(px(x),py(0));g.lineTo(px(x),py(1));g.stroke();g.textAlign='center';g.fillText(x.toFixed(1),px(x),py(0)+16)});
+ [0,0.25,0.5,0.75,1].forEach(y=>{g.beginPath();g.moveTo(px(-1),py(y));g.lineTo(px(1),py(y));g.stroke();g.textAlign='right';g.fillText(y.toFixed(2),pl-6,py(y)+4)});
+ g.textAlign='center';g.fillText('X = U/(1+|U|)',px(0),CH-8);g.textAlign='left';g.fillText('Y = H/(1+H)',pl,14);
+ // field
+ if($('fField').checked){const ax=nar?14:24,ay=Math.round(ax*0.75);g.strokeStyle='rgba(255,255,255,0.33)';g.fillStyle='rgba(255,255,255,0.33)';
+  for(let i=0;i<ax;i++)for(let j=0;j<ay;j++){const x=-1+(i+.5)/ax*2,y=(j+.5)/ay;const [W,Z]=inv(x,y);const sg=Math.sign(DW(W,Z)*DZ(W,Z))||1;const fW=sg*NW(W,Z,r)*DZ(W,Z),fZ=sg*NZ(W,Z,r)*DW(W,Z);
+   const U=(W+Z)/2,H=(W-Z)/2;let dx=(fW+fZ)/2/(1+Math.abs(U))**2*(CW-pl-pr)/2,dy=-(fW-fZ)/2/(1+H)**2*(CH-pt-pb);const L=Math.hypot(dx,dy);if(!(L>0))continue;dx/=L;dy/=L;const cx=px(x),cy=py(y),len=9;
+   g.beginPath();g.moveTo(cx-dx*len/2,cy-dy*len/2);g.lineTo(cx+dx*len/2,cy+dy*len/2);g.stroke();g.beginPath();g.moveTo(cx+dx*len/2,cy+dy*len/2);g.lineTo(cx+dx*len/2-dx*4-dy*2.5,cy+dy*len/2-dy*4+dx*2.5);g.lineTo(cx+dx*len/2-dx*4+dy*2.5,cy+dy*len/2-dy*4-dx*2.5);g.fill()}}
+ // sonic lines
+ if($('fSonic').checked)[[1,'rgba(255,255,255,0.9)',[7,5]],[-1,'#ff6b6b',[7,5]]].forEach(([sg,c,d])=>{g.strokeStyle=c;g.lineWidth=1.8;g.setLineDash(d);g.beginPath();let pen=false;for(let i=0;i<=800;i++){const x=-0.9995+i/800*1.999,U=x/(1-Math.abs(x)),H=sg*(1+U)/al;if(H<0){pen=false;continue}const yy=py(Y(H)),xx=px(x);pen?g.lineTo(xx,yy):g.moveTo(xx,yy);pen=true}g.stroke();g.setLineDash([])});
+ // traces
+ g.lineWidth=1.4;g.strokeStyle='#bfe9ff';traces.forEach(tr=>{g.beginPath();tr.forEach((p,i)=>{const [a,b]=P(...p);i?g.lineTo(a,b):g.moveTo(a,b)});g.stroke()});
+ // profile
+ const reached=neg.res=='top'&&Math.abs((neg.end[0]+neg.end[1])/2-U0)<0.05;
+ const curve=(pts,wd)=>{g.strokeStyle='#ffb59e';g.lineWidth=wd;g.beginPath();pts.forEach((p,i)=>{const [a,b]=P(...p);i?g.lineTo(a,b):g.moveTo(a,b)});g.stroke()};
+ curve(pos.pts,3.4);curve(neg.pts,3.4);if(reached){const [a,b]=P(...neg.end);g.beginPath();g.moveTo(a,b);g.lineTo(px(X(U0)),py(1));g.stroke()}
+ else{const [a,b]=P(...neg.end);g.fillStyle='#ffb59e';g.beginPath();g.arc(a,b,5,0,7);g.fill()}
+ // points
+ const dot=(x,y,t,c,dx,dy)=>{g.fillStyle=c;g.beginPath();g.arc(x,y,6,0,7);g.fill();g.strokeStyle='#0d4651';g.lineWidth=2;g.stroke();lab(g,t,x+(dx||9),y+(dy||-9),'#fff')};
+ dot(px(X(U0)),py(1),'P₀ · origin','#ffd8a8',9,16);const [a1,b1]=P(M.W0,M.Z0);dot(a1,b1,'Ps','#ffb59e');const [a2,b2]=P(0,0);dot(a2,b2,'P∞','#fff',9,-10);
+ $('fullRead').innerHTML=`r = ${r.toFixed(15)} · P<sub>0</sub> at U<sub>0</sub> = ${U0.toFixed(4)} (X = ${X(U0).toFixed(4)})<br>ξ &gt; 0 half: <b>${desc(pos,'H')}</b> · ξ &lt; 0 half: <b>${reached?'reaches P₀ (H = ∞ at U ≈ '+((neg.end[0]+neg.end[1])/2).toFixed(3)+')':desc(neg,'H')}</b> · ${traces.length} trace${traces.length==1?'':'s'}`}
+
+
+function traceAt(ev){if(!fullMap)return;const rect=$('cvFull').getBoundingClientRect();const {px,py,pl,pr,pt,pb,CW,CH,inv}=fullMap;const x=((ev.clientX-rect.left)-pl)/(CW-pl-pr)*2-1,y=(CH-pb-(ev.clientY-rect.top))/(CH-pt-pb);
+ if(x<=-1||x>=1||y<=0||y>=1)return;const r=R_MATCH+drVal(drT);const [W,Z]=inv(x,y);const f=integ(r,W,Z,false,15000),b=integ(r,W,Z,true,15000);traces.push(b.pts.slice().reverse().concat(f.pts));if(traces.length>12)traces.shift();drawFull()}
+
+/* ===== computed coefficient data ===== */
+let ZD=null,ZD2=null;
+function drawZ(){if(!ZD)return;const {R,rel,lz}=ZD,n0=ZD.n0,N=R.length;const step=Math.max(1,Math.floor(N/1400));
+ const L1=Math.log10(1-0.049),L2=Math.log10(1+0.049);const z=[],lo=[],up=[],plo=[],pup=[],pz=[],eu=[],ed=[];
+ for(let i=0;i<N;i+=step){const n=n0+i,c=lz[i]-Math.log10(R[i]);z.push([n,lz[i]]);lo.push([n,c+L1]);up.push([n,c+L2]);
+  plo.push([n,((1-0.049)/R[i]-1)*100]);pup.push([n,((1+0.049)/R[i]-1)*100]);pz.push([n,0]);eu.push([n,rel[i]*100]);ed.push([n,-rel[i]*100])}
+ plot($('svgZr'),{x:[n0,n0+N-1],y:[Math.floor(lz[0]/1000)*1000,Math.ceil(lz[N-1]/1000)*1000],
+  series:[{d:lo,c:'var(--aqua)',w:4},{d:up,c:'var(--blue)',w:2.5,dash:'7 5'},{d:z,c:'var(--coral)',w:1.4}],
+  xl:'n',yl:'log₁₀ of |value|',xf:v=>Math.round(v).toString(),yf:v=>Math.round(v).toLocaleString()});
+ plot($('svgZl'),{x:[n0,n0+N-1],y:[-10,4],band:[{y0:-100,y1:100,c:'transparent'}],h:[{y:0,c:'var(--coral)',dash:'1 0'}],
+  series:[{d:pup,c:'var(--blue)',w:2.5},{d:plo,c:'var(--aqua)',w:2.5},{d:eu,c:'var(--coral)',w:0.8,dash:'2 2'},{d:ed,c:'var(--coral)',w:0.8,dash:'2 2'}],
+  labels:[{x:n0+N-1,y:((1+0.049)/R[N-1]-1)*100,t:'upper bound',a:'end',c:'var(--blue)'},{x:n0+N-1,y:((1-0.049)/R[N-1]-1)*100,t:'lower bound',a:'end',c:'var(--aqua)'},{x:n0+N-1,y:0,t:'ẑₙ',a:'end',c:'var(--coral)'}],
+  xl:'n',yl:'distance from ẑₙ, % of |ẑₙ|',xf:v=>Math.round(v).toString(),yf:v=>(v>0?'+':'')+v+'%'});
+ let bad=0;R.forEach(v=>{if(Math.abs(v-1)>0.049)bad++});
+ $('zNote').innerHTML=`All ${N.toLocaleString()} indices satisfy lower ≤ |ẑ<sub>n</sub>| ≤ upper (${bad} violations). The gap to the upper bound grows from ${(((1.049)/R[0]-1)*100).toFixed(2)}% at n = ${n0.toLocaleString()} to ${(((1.049)/R[N-1]-1)*100).toFixed(2)}% at n = ${(n0+N-1).toLocaleString()}, because ẑ<sub>n</sub>/((C*/4) n ẑ<sub>n−1</sub>) − 1 decays roughly like 445/n. C<sub>*</sub> = ${ZD.Cs} is the limit of D<sub>Z,2</sub>/(2kD<sub>Z,1</sub>) as r → r*, computed to 20 digits. The comparison uses the κ → ∞ form of Buckmaster and Chen's ratio estimate (3.22e), which assumes the data are the r = r* coefficients; any constant normalisation of Z<sub>i</sub> cancels. The thin dashed lines show the uncertainty from the file's interval radii, at most ${(Math.max(...rel)*100).toFixed(2)}%. The jitter near n = 17,000 comes from the stored values carrying only about four significant digits there.`}
+/* ===== state ===== */
+let K=11.5,raf=0;
+const $=id=>document.getElementById(id);
+const sliders=[];
+function setK(k,src){K=k;sliders.forEach(([s,v,lo,hi])=>{const kk=Math.min(hi,Math.max(lo,k));if(s!==src)$(s).value=kk;$(v).textContent=kk.toFixed(2)});schedule()}
+function kFor(lo,hi){return Math.min(hi,Math.max(lo,K))}
+function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(drawAll)}
+function drawK(){const el=$('svgK');const rs=[],pts=[];for(let i=0;i<=240;i++){const r=1+(RS-1)*(1-(1-i/240)**3)*0.99999;const k=setup(r).k;if(k<=40)pts.push([r,k])}
+ const M=model(K);const marks=[];for(let j=2;j<=40;j++)marks.push([rOfK(j),j]);
+ plot(el,{x:[1,1.2],y:[0,40],series:[{d:pts,c:'var(--blue)',w:2.2},{d:marks,c:'var(--mut)',dots:true,line:false,r:1.8},{d:[[M.r,Math.min(40,M.k)]],c:'var(--coral)',dots:true,line:false,r:5}],
+  v:[{x:RS,c:'var(--coral)'}],labels:[{x:RS,y:36,t:'r*',a:'end',c:'var(--coral)'},{x:M.r,y:Math.min(40,M.k),t:'  current k',c:'var(--coral)'}],xl:'r',yl:'k(r)',xf:v=>v.toFixed(2)})}
+function drawRtab(){const rows=[3,5,11,51,101,1001,10001].map(n=>{const r=rOfK(n);return`<tr><td>${n}</td><td>${r.toFixed(10)}</td><td>${(RS-r).toExponential(3)}</td></tr>`}).join('');
+ $('tabR').innerHTML=`<thead><tr><th>n</th><th>r<sub>n</sub></th><th>r* − r<sub>n</sub></th></tr></thead><tbody>${rows}</tbody>`}
+function drawCoef(){if(!ZD2)return;const n0=ZD2.n0,N=ZD2.lzZ.length;const ys0=ZD2.lzZ;const d=[];for(let i=0;i<N;i++)d.push([n0+i,ys0[i],ZD2.sgn[i]]);
+ const ys=ys0;plot($('svgCoef'),{x:[n0,n0+N-1],y:[Math.floor(Math.min(...ys)),Math.ceil(Math.max(...ys))+1],series:[{d,c:'var(--coral)',dots:true,w:1,hollow:p=>p[2]<0}],xl:'n',yl:'log₁₀ |Zₙ/n!|'})}
+
+let est='prod',EST=null;
+function drawEst(){if(!EST)return;const n0=EST.n0,n1=EST.n1;const idx=n=>n-n0;let o;
+ if(est=='prod'){const p0=17,p1=Math.min(1000,n1);const d=EST.prod.map((v,i)=>[EST.n0prod+i,v]).filter(p=>p[0]>=p0&&p[0]<=p1);
+  const ys=d.map(p=>p[1]);o={x:[p0,p1],y:[Math.min(-1,Math.floor(Math.min(...ys))),Math.max(2.2,Math.ceil(Math.max(...ys)))],h:[{y:Math.log10(49),c:'var(--coral)'}],labels:[{x:p0,y:Math.log10(49),t:' C̄₁ = 49',c:'var(--coral)'}],series:[{d,c:'var(--aqua)',dots:true,w:1}],xl:'n',yl:'log₁₀ maxⱼ |ẑⱼẑₙ₋ⱼ| / |ẑₙ|'};
+  const bad=d.filter(p=>p[1]>Math.log10(49));$('estRead').innerHTML=bad.length?`${bad.length} indices exceed 49 on this range (first n = ${bad[0][0]})`:'<b>All products satisfy</b> |ẑⱼẑₙ₋ⱼ| ≤ 49 |ẑₙ| on this range.';
+  $('estNote').innerHTML='The largest product comes from the end terms j = 0 or 1, as the Catalan picture suggests — these are the actual stored coefficients, so the gap below C̄₁ = 49 here is itself evidence the constant has real room to spare.'}
+ else{const nw0=EST.n0wz??n0,wzN=Math.min(1000-nw0+1,EST.wzA.length),q1=nw0+wzN-1;
+  const d1=EST.wzA.slice(0,wzN).map((v,i)=>[nw0+i,v]),d2=EST.wzB.slice(0,wzN).map((v,i)=>[nw0+i,Math.min(v,4.5)]);
+  o={x:[0,1000],y:[0,4.6],xf:v=>Math.round(v).toString(),h:[{y:4,c:'var(--coral)'},{y:2,c:'var(--blue)'}],labels:[{x:0,y:4,t:' 4',c:'var(--coral)'},{x:0,y:2,t:' 2',c:'var(--blue)'}],series:[{d:d1,c:'var(--coral)',dots:true,w:1},{d:d2,c:'var(--blue)',dots:true,w:1}],xl:'n',yl:'|Wₙ/Zₙ₋₁| (coral), |Wₙ/Zₙ| (blue)'};
+  $('estRead').innerHTML=`max |W<sub>n</sub>/Z<sub>n−1</sub>| = <b>${Math.max(...EST.wzA.slice(0,wzN)).toFixed(3)}</b> ≤ 4 · max |W<sub>n</sub>/Z<sub>n</sub>| = <b>${Math.max(...EST.wzB.slice(0,wzN)).toExponential(2)}</b> ≤ 2`;
+  $('estNote').innerHTML='This chart plots the two coupling ratios the induction needs under control, |W<sub>n</sub>/Z<sub>n−1</sub>| (coral) and |W<sub>n</sub>/Z<sub>n</sub>| (blue), for n = 1 to 1000. The dashed lines mark the bounds that close the induction: |W<sub>n</sub>/Z<sub>n−1</sub>| ≤ 4 and |W<sub>n</sub>/Z<sub>n</sub>| ≤ 2. This coupling estimate is the new ingredient needed for Euler — in Buckmaster–Chen the equation is scalar, but here W<sub>n</sub> feeds the Z-recurrence through N<sub>Z</sub> and D<sub>Z</sub>. The coral curve is the one-step-shifted bound used to close the induction; the blue curve is the tighter same-index bound, and it sits far below 2 throughout.'}
+ plot($('svgEst'),o)}
+
+function drawAll(){[drawZ,drawFull,drawDir,drawCoef,drawEst,()=>drawBreak(2),drawTrap,drawOutBar].forEach(f=>{try{f()}catch(e){console.error(e)}})}
+
+/* ===== events ===== */
+[2].forEach(suf=>{
+ $('brCustom'+suf).onclick=()=>{BR[suf].useReal=false;$('brCustom'+suf).setAttribute('aria-pressed','true');$('brReal'+suf).setAttribute('aria-pressed','false');try{drawBreak(suf)}catch(e){console.error(e)}};
+ $('brReal'+suf).onclick=()=>{BR[suf].useReal=true;$('brReal'+suf).setAttribute('aria-pressed','true');$('brCustom'+suf).setAttribute('aria-pressed','false');try{drawBreak(suf)}catch(e){console.error(e)}};
+ for(let k=1;k<=10;k++){const el=$('brC'+k+suf);if(el)el.addEventListener('input',e=>{BR[suf].coefs[k-1]=+e.target.value||0;try{drawBreak(suf)}catch(er){console.error(er)}})}
+ $('brResetCoefs'+suf).onclick=()=>{const st=BR[suf],M=model(18);st.coefs=[M.z[1],0,0,0,0,0,0,0,0,0];try{drawBreak(suf)}catch(e){console.error(e)}};
+});
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{est=b.dataset.t;document.querySelectorAll('[data-t]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+ const bounds=est=='bounds';$('estPanel').hidden=bounds;$('boundsPanel').hidden=!bounds;
+ if(bounds){try{drawZ()}catch(e){console.error(e)}}else{drawEst()}});
+$('talkHint').onclick=e=>e.preventDefault();
+const secs=['top','introduction','problem','full','directions','riemann','outline','focus','section2','taylor','catalan','estimates','corollaries','barriers'].map($);
+const cur=()=>{let i=0;secs.forEach((s,j)=>{if(s.getBoundingClientRect().top<window.innerHeight*0.35)i=j});return i};
+document.addEventListener('keydown',e=>{const t=document.activeElement;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
+ let d=0;if(e.key==='ArrowRight'||e.key==='PageDown')d=1;if(e.key==='ArrowLeft'||e.key==='PageUp')d=-1;if(!d)return;e.preventDefault();const i=Math.min(secs.length-1,Math.max(0,cur()+d));secs[i].scrollIntoView({behavior:reduce?'auto':'smooth'})});
+const links=[...document.querySelectorAll('#nav a[href^="#"]')];
+const navObs=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+en.target.id))}})},{rootMargin:'-40% 0px -55% 0px'});
+secs.slice(1).forEach(s=>navObs.observe(s));
+document.querySelectorAll('.proof-btn').forEach(b=>{b.onclick=()=>{const d=document.getElementById(b.dataset.target);const opening=d.hasAttribute('hidden');if(opening){d.removeAttribute('hidden');b.textContent='Hide proof';b.setAttribute('aria-expanded','true')}else{d.setAttribute('hidden','');b.textContent='Show proof';b.setAttribute('aria-expanded','false')}}});
+const ro=new ResizeObserver(()=>schedule());document.querySelectorAll('.fig').forEach(f=>ro.observe(f));
+$('dMinus').onclick=()=>{dirMode='minus';$('dMinus').setAttribute('aria-pressed','true');$('dPlus').setAttribute('aria-pressed','false');animDir()};
+$('dPlus').onclick=()=>{dirMode='plus';$('dPlus').setAttribute('aria-pressed','true');$('dMinus').setAttribute('aria-pressed','false');animDir()};
+$('dTrace').onclick=animDir;$('dProg').addEventListener('input',e=>{dProg=+e.target.value;drawDir()});$('dField').addEventListener('change',()=>drawDir());
+$('dr').addEventListener('input',e=>{drT=+e.target.value;traces=[];try{drawFull()}catch(er){console.error(er)}});$('dr0').onclick=()=>{drT=0;$('dr').value=0;traces=[];drawFull()};
+$('clrTr').onclick=()=>{traces=[];drawFull()};['fField','fSonic'].forEach(id=>$(id).addEventListener('change',()=>drawFull()));$('cvFull').addEventListener('click',e=>{try{traceAt(e)}catch(er){console.error(er)}});
+fetch('zdata.json').then(r=>r.json()).then(j=>{ZD=j;drawZ()}).catch(()=>{$('zNote').textContent='Could not load the coefficient data.'});
+fetch('zdata2.json').then(r=>r.json()).then(j=>{ZD2=j;drawCoef()}).catch(()=>{});
+fetch('estdata.json').then(r=>r.json()).then(j=>{EST=j;drawEst()}).catch(()=>{});
+setK(setup(R_MATCH).k);
+}
+</script>
+</body>
+</html>
