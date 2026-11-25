@@ -13,10 +13,18 @@
    COLOUR and TYPE: white paper, deep teal plates, coral for the profile, aqua for barriers; Newsreader + Inter.
    LAYOUT: one section per "slide", figure-first, controls under each figure, stacked on phones. */
 :root{color-scheme:light dark;
---bg:light-dark(#ffffff,#0d1214);--ink:light-dark(#14181b,#e6ecee);--mut:light-dark(#56626b,#97a5ad);
---line:light-dark(#dfe4e7,#253036);--soft:light-dark(#f3f6f7,#141b1e);
---plate:light-dark(#0d4651,#0a343c);--coral:light-dark(#e2492b,#ff7a5c);--aqua:light-dark(#11857a,#7fd6c2);--blue:light-dark(#2b63b8,#9ec4ff)}
-:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+--bg:#ffffff;--ink:#14181b;--mut:#56626b;
+--line:#dfe4e7;--soft:#f3f6f7;
+--plate:#0d4651;--coral:#e2492b;--aqua:#11857a;--blue:#2b63b8}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+--bg:#0d1214;--ink:#e6ecee;--mut:#97a5ad;
+--line:#253036;--soft:#141b1e;
+--plate:#0a343c;--coral:#ff7a5c;--aqua:#7fd6c2;--blue:#9ec4ff}}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark;
+--bg:#0d1214;--ink:#e6ecee;--mut:#97a5ad;
+--line:#253036;--soft:#141b1e;
+--plate:#0a343c;--coral:#ff7a5c;--aqua:#7fd6c2;--blue:#9ec4ff}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Inter,system-ui,sans-serif;overflow-x:clip}
 h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:600;line-height:1.08;text-wrap:balance;margin:0 0 .5em}
